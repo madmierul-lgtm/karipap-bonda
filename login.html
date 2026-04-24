@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — Karipap Bonda Document Manager</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/documents.css" />
+  <style>
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #2C1810 0%, #1A0A05 60%, #3D1F0A 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Poppins', sans-serif;
+      padding: 1.5rem;
+    }
+
+    .login-wrap {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    /* brand */
+    .login-brand {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .login-brand .logo-circle {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #D4AF37, #B8941F);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      margin: 0 auto 1rem;
+      box-shadow: 0 8px 24px rgba(212,175,55,.4);
+    }
+    .login-brand h1 {
+      font-family: 'Playfair Display', serif;
+      color: #fff;
+      font-size: 1.8rem;
+      margin-bottom: .2rem;
+    }
+    .login-brand p {
+      color: rgba(255,255,255,.45);
+      font-size: .82rem;
+      margin: 0;
+    }
+
+    /* card */
+    .login-card {
+      background: rgba(255,255,255,.06);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 20px;
+      padding: 2.2rem 2rem;
+    }
+
+    .login-card .form-label {
+      color: rgba(255,255,255,.7);
+      font-size: .78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: .35rem;
+    }
+
+    .login-card .form-control {
+      background: rgba(255,255,255,.08);
+      border: 1.5px solid rgba(255,255,255,.15);
+      color: #fff;
+      border-radius: 10px;
+      padding: .7rem 1rem;
+      font-size: .9rem;
+    }
+    .login-card .form-control::placeholder { color: rgba(255,255,255,.3); }
+    .login-card .form-control:focus {
+      background: rgba(255,255,255,.12);
+      border-color: #D4AF37;
+      box-shadow: 0 0 0 3px rgba(212,175,55,.2);
+      color: #fff;
+    }
+
+    .input-group-text {
+      background: rgba(255,255,255,.08) !important;
+      border: 1.5px solid rgba(255,255,255,.15) !important;
+      border-right: none !important;
+      color: rgba(255,255,255,.5) !important;
+    }
+    .input-group .form-control { border-left: none !important; }
+
+    .btn-toggle-pw {
+      background: rgba(255,255,255,.08);
+      border: 1.5px solid rgba(255,255,255,.15);
+      border-left: none;
+      color: rgba(255,255,255,.5);
+      border-radius: 0 10px 10px 0;
+      padding: 0 .9rem;
+      cursor: pointer;
+      transition: color .2s;
+    }
+    .btn-toggle-pw:hover { color: #D4AF37; }
+
+    .btn-login {
+      background: linear-gradient(135deg, #D4AF37, #B8941F);
+      color: #1A1008;
+      border: none;
+      border-radius: 10px;
+      padding: .75rem;
+      font-size: .95rem;
+      font-weight: 700;
+      width: 100%;
+      transition: all .3s;
+      font-family: 'Poppins', sans-serif;
+    }
+    .btn-login:hover {
+      background: linear-gradient(135deg, #F5D87A, #D4AF37);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(212,175,55,.4);
+    }
+    .btn-login:disabled {
+      opacity: .7;
+      transform: none;
+    }
+
+    .login-error {
+      background: rgba(220,53,69,.15);
+      border: 1px solid rgba(220,53,69,.3);
+      color: #FF8A8A;
+      border-radius: 10px;
+      padding: .65rem 1rem;
+      font-size: .82rem;
+      display: none;
+    }
+
+    .login-footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      color: rgba(255,255,255,.25);
+      font-size: .75rem;
+    }
+    .login-footer a {
+      color: #D4AF37;
+      text-decoration: none;
+    }
+
+    /* hint pill */
+    .hint-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      background: rgba(212,175,55,.1);
+      border: 1px solid rgba(212,175,55,.2);
+      border-radius: 50px;
+      padding: .3rem .8rem;
+      font-size: .72rem;
+      color: rgba(255,255,255,.45);
+      margin-bottom: 1.2rem;
+    }
+    .hint-pill i { color: #D4AF37; }
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+
+    <!-- Brand -->
+    <div class="login-brand">
+      <div class="logo-circle">🥟</div>
+      <h1>Karipap Bonda</h1>
+      <p>Document Manager &mdash; Staff Access Only</p>
+    </div>
+
+    <!-- Card -->
+    <div class="login-card">
+      <div class="text-center mb-4">
+        <span class="hint-pill">
+          <i class="bi bi-shield-lock-fill"></i>
+          Secure Login Required
+        </span>
+      </div>
+
+      <div id="loginError" class="login-error mb-3">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span id="loginErrorMsg">Invalid username or password.</span>
+      </div>
+
+      <form id="loginForm" novalidate autocomplete="off">
+        <div class="mb-3">
+          <label class="form-label">Username</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+            <input type="text" class="form-control" id="username"
+              placeholder="Enter username" autocomplete="username" required />
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label">Password</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+            <input type="password" class="form-control" id="password"
+              placeholder="Enter password" autocomplete="current-password" required />
+            <button type="button" class="btn-toggle-pw" id="btnTogglePw" tabindex="-1">
+              <i class="bi bi-eye" id="eyeIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-login" id="loginBtn">
+          <span class="btn-text"><i class="bi bi-box-arrow-in-right me-2"></i>Sign In</span>
+          <span class="btn-loading d-none">
+            <span class="spinner-border spinner-border-sm me-2"></span>Signing in...
+          </span>
+        </button>
+      </form>
+    </div>
+
+    <div class="login-footer">
+      <a href="index.html"><i class="bi bi-arrow-left me-1"></i>Back to website</a>
+      &nbsp;&bull;&nbsp;
+      &copy; 2026 Karipap Bonda Enterprise
+    </div>
+
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script>
+    // Redirect if already logged in
+    Auth.redirectIfLoggedIn('documents.html');
+
+    const form = document.getElementById('loginForm');
+    const errBox = document.getElementById('loginError');
+    const errMsg = document.getElementById('loginErrorMsg');
+    const loginBtn = document.getElementById('loginBtn');
+    const btnToggle = document.getElementById('btnTogglePw');
+    const pwField = document.getElementById('password');
+    const eyeIcon = document.getElementById('eyeIcon');
+
+    // Toggle password visibility
+    btnToggle.addEventListener('click', () => {
+      const show = pwField.type === 'password';
+      pwField.type = show ? 'text' : 'password';
+      eyeIcon.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+    });
+
+    // Submit
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      errBox.style.display = 'none';
+
+      const username = document.getElementById('username').value.trim();
+      const password = pwField.value;
+
+      if (!username || !password) {
+        errMsg.textContent = 'Please enter both username and password.';
+        errBox.style.display = 'block';
+        return;
+      }
+
+      // Loading state
+      loginBtn.querySelector('.btn-text').classList.add('d-none');
+      loginBtn.querySelector('.btn-loading').classList.remove('d-none');
+      loginBtn.disabled = true;
+
+      // Slight delay for UX
+      setTimeout(() => {
+        if (Auth.login(username, password)) {
+          window.location.href = 'documents.html';
+        } else {
+          loginBtn.querySelector('.btn-text').classList.remove('d-none');
+          loginBtn.querySelector('.btn-loading').classList.add('d-none');
+          loginBtn.disabled = false;
+          errMsg.textContent = 'Invalid username or password. Please try again.';
+          errBox.style.display = 'block';
+          pwField.value = '';
+          pwField.focus();
+        }
+      }, 700);
+    });
+  </script>
+</body>
+</html>

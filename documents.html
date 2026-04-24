@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Purchase Order & Invoice — Karipap Bonda</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/documents.css" />
+</head>
+<body class="doc-body">
+
+  <!-- ===== TOP BAR ===== -->
+  <div class="doc-topbar">
+    <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
+      <a href="index.html" class="topbar-brand">
+        <span>🥟</span> Karipap <strong>Bonda</strong>
+      </a>
+      <div class="d-flex align-items-center gap-3">
+        <span class="topbar-label">Document Manager</span>
+        <a href="index.html" class="btn btn-sm btn-outline-gold">
+          <i class="bi bi-arrow-left me-1"></i> Back to Site
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid px-4 pt-4 pb-5">
+
+    <!-- ===== PAGE HEADER ===== -->
+    <div class="row mb-4 align-items-center">
+      <div class="col">
+        <h1 class="doc-page-title">Document Manager</h1>
+        <p class="text-muted mb-0">Create, preview and print Purchase Orders &amp; Invoices</p>
+      </div>
+      <div class="col-auto d-flex gap-2">
+        <button class="btn btn-outline-secondary btn-sm" id="btnHistory">
+          <i class="bi bi-clock-history me-1"></i> History
+        </button>
+        <button class="btn btn-gold btn-sm" id="btnNewDoc">
+          <i class="bi bi-plus-lg me-1"></i> New Document
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== DOC TYPE TABS ===== -->
+    <ul class="nav doc-tabs mb-4" id="docTabs">
+      <li class="nav-item">
+        <button class="doc-tab active" data-tab="po">
+          <i class="bi bi-cart3 me-2"></i> Purchase Order
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="doc-tab" data-tab="inv">
+          <i class="bi bi-receipt me-2"></i> Invoice
+        </button>
+      </li>
+    </ul>
+
+    <!-- ===== SPLIT VIEW: FORM | PREVIEW ===== -->
+    <div class="doc-split-view">
+
+      <!-- ============================
+           LEFT — FORM PANEL
+           ============================ -->
+      <div class="doc-form-panel">
+
+        <!-- ========== PURCHASE ORDER FORM ========== -->
+        <div id="poForm" class="doc-form-section">
+
+          <!-- Header Info -->
+          <div class="form-card">
+            <div class="form-card-title">
+              <i class="bi bi-info-circle-fill text-gold"></i> Document Details
+            </div>
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label class="form-label">PO Number</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-hash"></i></span>
+                  <input type="text" class="form-control" id="poNumber" readonly />
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">PO Date</label>
+                <input type="date" class="form-control" id="poDate" />
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Delivery Date</label>
+                <input type="date" class="form-control" id="poDeliveryDate" />
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Status</label>
+                <select class="form-select" id="poStatus">
+                  <option value="draft">Draft</option>
+                  <option value="sent">Sent to Supplier</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="received">Received</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Supplier Info -->
+          <div class="form-card">
+            <div class="form-card-title">
+              <i class="bi bi-building text-gold"></i> Supplier Information
+            </div>
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Supplier / Company Name</label>
+                <input type="text" class="form-control" id="poSupplierName" placeholder="e.g. Rempah Segar Sdn Bhd" />
+              </div>
+              <div class="col-12">
+                <label class="form-label">Address</label>
+                <textarea class="form-control" id="poSupplierAddress" rows="2" placeholder="No. 5, Jalan Industri 3, Shah Alam, Selangor"></textarea>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Contact Person</label>
+                <input type="text" class="form-control" id="poSupplierContact" placeholder="En. Ahmad" />
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Phone / WhatsApp</label>
+                <input type="text" class="form-control" id="poSupplierPhone" placeholder="+60 3-1234 5678" />
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" id="poSupplierEmail" placeholder="supplier@email.com" />
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">SST Registration No.</label>
+                <input type="text" class="form-control" id="poSupplierSST" placeholder="W10-1234-12345678" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Line Items -->
+          <div class="form-card">
+            <div class="form-card-title d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-list-ul text-gold"></i> Items Ordered</span>
+              <button class="btn btn-sm btn-gold" id="poAddRow">
+                <i class="bi bi-plus-lg me-1"></i> Add Item
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="items-table" id="poItemsTable">
+                <thead>
+                  <tr>
+                    <th style="width:40%">Description</th>
+                    <th style="width:12%">Unit</th>
+                    <th style="width:13%">Qty</th>
+                    <th style="width:16%">Unit Price (RM)</th>
+                    <th style="width:14%">Amount (RM)</th>
+                    <th style="width:5%"></th>
+                  </tr>
+                </thead>
+                <tbody id="poItemsBody">
+                  <!-- rows injected by JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Totals -->
+            <div class="totals-block">
+              <div class="total-row">
+                <span>Subtotal</span>
+                <span id="poSubtotal">RM 0.00</span>
+              </div>
+              <div class="total-row">
+                <span class="d-flex align-items-center gap-2">
+                  SST
+                  <select class="form-select form-select-sm tax-select" id="poTaxRate">
+                    <option value="0">0%</option>
+                    <option value="6" selected>6%</option>
+                    <option value="8">8%</option>
+                  </select>
+                </span>
+                <span id="poTax">RM 0.00</span>
+              </div>
+              <div class="total-row total-grand">
+                <span>Total</span>
+                <span id="poTotal">RM 0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notes & Terms -->
+          <div class="form-card">
+            <div class="form-card-title">
+              <i class="bi bi-chat-left-text text-gold"></i> Notes &amp; Terms
+            </div>
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Delivery Instructions</label>
+                <textarea class="form-control" id="poDeliveryNotes" rows="2" placeholder="Please deliver to our kitchen address..."></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Terms &amp; Conditions</label>
+                <textarea class="form-control" id="poTerms" rows="2" placeholder="Payment within 30 days of delivery. Goods must match specifications."></textarea>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /poForm -->
+
+        <!-- ========== INVOICE FORM ========== -->
+        <div id="invForm" class="doc-form-section d-none">
+
+          <!-- Header Info -->
+          <div class="form-card">
+            <div class="form-card-title">
+              <i class="bi bi-info-circle-fill text-gold"></i> Document Details
+            </div>
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label class="form-label">Invoice Number</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-hash"></i></span>
+                  <input type="text" class="form-control" id="invNumber" readonly />
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Invoice Date</label>
+                <input type="date" class="form-control" id="invDate" />
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Due Date</label>
+                <input type="date" class="form-control" id="invDueDate" />
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Status</label>
+                <select class="form-select" id="invStatus">
+                  <option value="draft">Draft</option>
+                  <option value="sent">Sent</option>
+                  <option value="partial">Partially Paid</option>
+                  <option value="paid">Paid</option>
+                  <option value="overdue">Overdue</option>
+                </select>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Payment Terms</label>
+                <select class="form-select" id="invPaymentTerms">
+                  <option>Cash on Delivery</option>
+                  <option>Net 7 Days</option>
+                  <option>Net 14 Days</option>
+                  <option>Net 30 Days</option>
+                  <option>50% Deposit + Balance on Delivery</option>
+                </select>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Currency</label>
+                <select class="form-select" id="invCurrency">
+                  <option value="RM">MYR (RM)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="SGD">SGD (S$)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bill To -->
+          <div class="form-card">
+            <div class="form-card-title">
+              <i class="bi bi-person-fill text-gold"></i> Bill To (Customer)
+            </div>
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label class="form-label">Customer Name</label>
+                <input type="text" class="form-control" id="invCustomerName" placeholder="Ahmad Abdullah" />
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Company (optional)</label>
+                <input type="text" class="form-control" id="invCustomerCompany" placeholder="Syarikat XYZ Sdn Bhd" />
+              </div>
+              <div class="col-12">
+                <label class="form-label">Delivery / Billing Address</label>
+                <textarea class="form-control" id="invCustomerAddress" rows="2" placeholder="No. 10, Jalan Damai, Taman Maju, 50480 Kuala Lumpur"></textarea>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Phone / WhatsApp</label>
+                <input type="text" class="form-control" id="invCustomerPhone" placeholder="+60 12-345 6789" />
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" id="invCustomerEmail" placeholder="customer@email.com" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Line Items -->
+          <div class="form-card">
+            <div class="form-card-title d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-list-ul text-gold"></i> Items / Services</span>
+              <button class="btn btn-sm btn-gold" id="invAddRow">
+                <i class="bi bi-plus-lg me-1"></i> Add Item
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="items-table" id="invItemsTable">
+                <thead>
+                  <tr>
+                    <th style="width:40%">Description</th>
+                    <th style="width:12%">Unit</th>
+                    <th style="width:13%">Qty</th>
+                    <th style="width:16%">Unit Price</th>
+                    <th style="width:14%">Amount</th>
+                    <th style="width:5%"></th>
+                  </tr>
+                </thead>
+                <tbody id="invItemsBody">
+                  <!-- rows injected by JS -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Discount row -->
+            <div class="discount-row mt-3">
+              <label class="form-label mb-1 small fw-semibold">Discount</label>
+              <div class="d-flex gap-2 align-items-center">
+                <input type="number" class="form-control form-control-sm" id="invDiscountValue" value="0" min="0" style="max-width:90px;" />
+                <select class="form-select form-select-sm" id="invDiscountType" style="max-width:100px;">
+                  <option value="pct">%</option>
+                  <option value="fixed">RM</option>
+                </select>
+                <span class="text-muted small">off subtotal</span>
+              </div>
+            </div>
+
+            <!-- Totals -->
+            <div class="totals-block">
+              <div class="total-row">
+                <span>Subtotal</span>
+                <span id="invSubtotal">RM 0.00</span>
+              </div>
+              <div class="total-row" id="invDiscountRow">
+                <span>Discount</span>
+                <span id="invDiscountAmt">– RM 0.00</span>
+              </div>
+              <div class="total-row">
+                <span class="d-flex align-items-center gap-2">
+                  SST
+                  <select class="form-select form-select-sm tax-select" id="invTaxRate">
+                    <option value="0">0%</option>
+                    <option value="6" selected>6%</option>
+                    <option value="8">8%</option>
+                  </select>
+                </span>
+                <span id="invTax">RM 0.00</span>
+              </div>
+              <div class="total-row total-grand">
+                <span>Total Due</span>
+                <span id="invTotal">RM 0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bank & Notes -->
+          <div class="form-card">
+            <div class="form-card-title">
+              <i class="bi bi-bank text-gold"></i> Payment Details
+            </div>
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label class="form-label">Bank Name</label>
+                <input type="text" class="form-control" id="invBankName" value="Maybank" />
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Account Number</label>
+                <input type="text" class="form-control" id="invBankAcc" value="1234 5678 9012" />
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Account Name</label>
+                <input type="text" class="form-control" id="invBankName2" value="Karipap Bonda Enterprise" />
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">DuitNow / QR ID</label>
+                <input type="text" class="form-control" id="invDuitNow" placeholder="+60 12-345 6789" />
+              </div>
+              <div class="col-12">
+                <label class="form-label">Notes to Customer</label>
+                <textarea class="form-control" id="invNotes" rows="2" placeholder="Thank you for your order! Please retain this invoice for your records."></textarea>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /invForm -->
+
+        <!-- ===== ACTION BUTTONS ===== -->
+        <div class="doc-actions">
+          <button class="btn btn-outline-secondary" id="btnReset">
+            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+          </button>
+          <button class="btn btn-outline-gold" id="btnSave">
+            <i class="bi bi-floppy me-1"></i> Save Draft
+          </button>
+          <button class="btn btn-gold" id="btnPreview">
+            <i class="bi bi-eye me-1"></i> Preview
+          </button>
+          <button class="btn btn-dark" id="btnPrint">
+            <i class="bi bi-printer me-1"></i> Print / PDF
+          </button>
+        </div>
+
+      </div><!-- /form panel -->
+
+      <!-- ============================
+           RIGHT — LIVE PREVIEW PANEL
+           ============================ -->
+      <div class="doc-preview-panel" id="previewPanel">
+        <div class="preview-toolbar">
+          <span class="preview-label"><i class="bi bi-eye me-1"></i> Live Preview</span>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary" id="btnZoomOut" title="Zoom out"><i class="bi bi-zoom-out"></i></button>
+            <button class="btn btn-sm btn-outline-secondary" id="btnZoomIn" title="Zoom in"><i class="bi bi-zoom-in"></i></button>
+            <button class="btn btn-sm btn-gold" id="btnPrint2">
+              <i class="bi bi-printer me-1"></i> Print
+            </button>
+          </div>
+        </div>
+
+        <div class="preview-scaler" id="previewScaler">
+          <!-- ===== PRINTABLE DOCUMENT ===== -->
+          <div class="printable-doc" id="printableDoc">
+
+            <!-- Doc Header -->
+            <div class="pdoc-header">
+              <div class="pdoc-brand">
+                <div class="pdoc-logo">🥟</div>
+                <div>
+                  <div class="pdoc-company">Karipap Bonda</div>
+                  <div class="pdoc-company-sub">Enterprise (002345678-K)</div>
+                </div>
+              </div>
+              <div class="pdoc-meta">
+                <div class="pdoc-doctype" id="pDocType">PURCHASE ORDER</div>
+                <table class="pdoc-meta-table">
+                  <tr>
+                    <td>No.</td>
+                    <td id="pDocNumber">—</td>
+                  </tr>
+                  <tr>
+                    <td>Date</td>
+                    <td id="pDocDate">—</td>
+                  </tr>
+                  <tr>
+                    <td id="pDocDateLabel2">Delivery</td>
+                    <td id="pDocDate2">—</td>
+                  </tr>
+                  <tr>
+                    <td>Status</td>
+                    <td><span id="pDocStatus" class="pdoc-status-badge">Draft</span></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <!-- From / To -->
+            <div class="pdoc-parties">
+              <div class="pdoc-party">
+                <div class="pdoc-party-label">FROM</div>
+                <div class="pdoc-party-name">Karipap Bonda Enterprise</div>
+                <div class="pdoc-party-detail">No. 12, Jalan Bonda Maju, Kampung Baru</div>
+                <div class="pdoc-party-detail">50300 Kuala Lumpur, Malaysia</div>
+                <div class="pdoc-party-detail">+60 12-345 6789 | hello@karipapbonda.my</div>
+                <div class="pdoc-party-detail">SST: W10-1234-12345678</div>
+              </div>
+              <div class="pdoc-party pdoc-party-to">
+                <div class="pdoc-party-label" id="pToLabel">TO (SUPPLIER)</div>
+                <div class="pdoc-party-name" id="pToName">—</div>
+                <div class="pdoc-party-detail" id="pToAddress">—</div>
+                <div class="pdoc-party-detail" id="pToContact">—</div>
+                <div class="pdoc-party-detail" id="pToEmail">—</div>
+                <div class="pdoc-party-detail" id="pToExtra">—</div>
+              </div>
+            </div>
+
+            <!-- Items Table -->
+            <table class="pdoc-items">
+              <thead>
+                <tr>
+                  <th class="col-no">#</th>
+                  <th class="col-desc">Description</th>
+                  <th class="col-unit">Unit</th>
+                  <th class="col-qty">Qty</th>
+                  <th class="col-price">Unit Price</th>
+                  <th class="col-amount">Amount</th>
+                </tr>
+              </thead>
+              <tbody id="pItemsBody">
+                <tr class="pdoc-empty-row">
+                  <td colspan="6">No items added yet</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Totals + Notes -->
+            <div class="pdoc-footer-grid">
+              <div class="pdoc-notes-col">
+                <div id="pNotes" class="pdoc-notes-block"></div>
+                <div id="pBankBlock" class="pdoc-bank-block d-none">
+                  <div class="pdoc-bank-title">Payment Details</div>
+                  <div id="pBankDetails"></div>
+                </div>
+              </div>
+              <div class="pdoc-totals-col">
+                <table class="pdoc-totals-table">
+                  <tr>
+                    <td>Subtotal</td>
+                    <td id="pSubtotal">RM 0.00</td>
+                  </tr>
+                  <tr id="pDiscountTr" class="d-none">
+                    <td>Discount</td>
+                    <td id="pDiscount">– RM 0.00</td>
+                  </tr>
+                  <tr id="pTaxTr">
+                    <td id="pTaxLabel">SST (6%)</td>
+                    <td id="pTaxAmt">RM 0.00</td>
+                  </tr>
+                  <tr class="pdoc-total-grand">
+                    <td id="pTotalLabel">Total</td>
+                    <td id="pGrandTotal">RM 0.00</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <!-- Terms -->
+            <div class="pdoc-terms" id="pTerms"></div>
+
+            <!-- Signature -->
+            <div class="pdoc-signatures">
+              <div class="pdoc-sig-block">
+                <div class="pdoc-sig-line"></div>
+                <div class="pdoc-sig-label">Authorised by — Karipap Bonda</div>
+              </div>
+              <div class="pdoc-sig-block">
+                <div class="pdoc-sig-line"></div>
+                <div class="pdoc-sig-label" id="pSigLabel2">Received / Acknowledged</div>
+              </div>
+            </div>
+
+            <div class="pdoc-footer-note">
+              This document was generated by Karipap Bonda Enterprise • hello@karipapbonda.my
+            </div>
+
+          </div><!-- /printable-doc -->
+        </div>
+      </div><!-- /preview panel -->
+
+    </div><!-- /split view -->
+  </div><!-- /container -->
+
+  <!-- ===== SAVE SUCCESS TOAST ===== -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999">
+    <div id="saveToast" class="toast align-items-center text-white border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body" id="toastMsg">
+          <i class="bi bi-check-circle-fill me-2"></i> Draft saved successfully!
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HISTORY MODAL ===== -->
+  <div class="modal fade" id="historyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header border-0">
+          <h5 class="modal-title"><i class="bi bi-clock-history text-gold me-2"></i>Saved Documents</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="historyBody">
+          <p class="text-muted text-center py-4">No saved documents yet.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/documents.js"></script>
+</body>
+</html>
