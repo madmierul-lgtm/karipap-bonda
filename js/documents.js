@@ -36,12 +36,20 @@ const genDocNum = prefix => {
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
+  // Show logged-in user
+  const session = Auth.session();
+  if (session) {
+    $('topbarUser').innerHTML =
+      `<span class="topbar-user-badge"><i class="bi bi-person-circle me-1"></i>${escHtml(session.displayName)}</span>`;
+  }
+
+  // Logout
+  $('btnLogout').addEventListener('click', () => Auth.logout());
+
   initDates();
   initDocNumbers();
-  addRow('po');
-  addRow('po');
-  addRow('inv');
-  addRow('inv');
+  addRow('po'); addRow('po');
+  addRow('inv'); addRow('inv');
   bindEvents();
   updatePreview();
 });
@@ -60,26 +68,16 @@ function initDocNumbers() {
 
 // ===== EVENT BINDING =====
 function bindEvents() {
-  // Tab switch
   document.querySelectorAll('.doc-tab').forEach(btn => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
 
-  // Add rows
   $('poAddRow').addEventListener('click', () => addRow('po'));
   $('invAddRow').addEventListener('click', () => addRow('inv'));
 
-  // Live preview on any input change
-  document.addEventListener('input', () => {
-    calcTotals(state.activeTab);
-    updatePreview();
-  });
-  document.addEventListener('change', () => {
-    calcTotals(state.activeTab);
-    updatePreview();
-  });
+  document.addEventListener('input', () => { calcTotals(state.activeTab); updatePreview(); });
+  document.addEventListener('change', () => { calcTotals(state.activeTab); updatePreview(); });
 
-  // Buttons
   $('btnPrint').addEventListener('click', () => window.print());
   $('btnPrint2').addEventListener('click', () => window.print());
   $('btnPreview').addEventListener('click', () => {
@@ -108,9 +106,7 @@ function switchTab(tab) {
 // ===== ROW MANAGEMENT =====
 function addRow(type) {
   const tbody = $(`${type}ItemsBody`);
-  const idx = tbody.children.length;
   const tr = document.createElement('tr');
-  tr.dataset.idx = idx;
   tr.innerHTML = `
     <td><input class="form-control item-desc" type="text" placeholder="e.g. Karipap Classik (10 pcs)" /></td>
     <td><input class="form-control item-unit" type="text" placeholder="Box" /></td>
@@ -122,47 +118,39 @@ function addRow(type) {
   tbody.appendChild(tr);
 
   tr.querySelector('.btn-remove-row').addEventListener('click', () => {
-    if (tbody.children.length > 1) {
-      tr.remove();
-      calcTotals(type);
-      updatePreview();
-    }
+    if (tbody.children.length > 1) { tr.remove(); calcTotals(type); updatePreview(); }
   });
 
-  // Recalc on row input
   ['item-qty', 'item-price'].forEach(cls => {
     tr.querySelector(`.${cls}`).addEventListener('input', () => {
-      updateRowAmount(tr);
-      calcTotals(type);
-      updatePreview();
+      updateRowAmount(tr); calcTotals(type); updatePreview();
     });
   });
 }
 
 function updateRowAmount(tr) {
-  const qty = parseFloat(tr.querySelector('.item-qty')?.value) || 0;
+  const qty   = parseFloat(tr.querySelector('.item-qty')?.value)   || 0;
   const price = parseFloat(tr.querySelector('.item-price')?.value) || 0;
-  const amt = qty * price;
+  const amt   = qty * price;
   tr.querySelector('.row-amount').textContent = fmt(amt);
   return amt;
 }
 
 function getRows(type) {
-  const tbody = $(`${type}ItemsBody`);
-  return [...tbody.querySelectorAll('tr')].map(tr => ({
-    desc: tr.querySelector('.item-desc')?.value.trim() || '',
-    unit: tr.querySelector('.item-unit')?.value.trim() || '',
-    qty: parseFloat(tr.querySelector('.item-qty')?.value) || 0,
-    price: parseFloat(tr.querySelector('.item-price')?.value) || 0,
+  return [...$(`${type}ItemsBody`).querySelectorAll('tr')].map(tr => ({
+    desc:   tr.querySelector('.item-desc')?.value.trim()  || '',
+    unit:   tr.querySelector('.item-unit')?.value.trim()  || '',
+    qty:    parseFloat(tr.querySelector('.item-qty')?.value)    || 0,
+    price:  parseFloat(tr.querySelector('.item-price')?.value)  || 0,
     amount: updateRowAmount(tr),
   }));
 }
 
 // ===== CALC TOTALS =====
 function calcTotals(type) {
-  const rows = getRows(type);
+  const rows     = getRows(type);
   const subtotal = rows.reduce((s, r) => s + r.amount, 0);
-  const taxRate = parseFloat($(`${type}TaxRate`).value) / 100;
+  const taxRate  = parseFloat($(`${type}TaxRate`).value) / 100;
 
   let discount = 0;
   if (type === 'inv') {
@@ -174,97 +162,136 @@ function calcTotals(type) {
   }
 
   const taxable = subtotal - discount;
-  const tax = taxable * taxRate;
-  const total = taxable + tax;
+  const tax     = taxable * taxRate;
+  const total   = taxable + tax;
 
   $(`${type}Subtotal`).textContent = fmt(subtotal);
-  $(`${type}Tax`).textContent = fmt(tax);
-  $(`${type}Total`).textContent = fmt(total);
+  $(`${type}Tax`).textContent      = fmt(tax);
+  $(`${type}Total`).textContent    = fmt(total);
 }
 
 // ===== LIVE PREVIEW =====
 function updatePreview() {
-  const t = state.activeTab;
-
-  if (t === 'po') renderPO();
-  else renderInvoice();
+  state.activeTab === 'po' ? renderPO() : renderInvoice();
 }
 
+// ---- PURCHASE ORDER ----
 function renderPO() {
-  const cur = 'RM';
-  const rows = getRows('po');
-  const subtotal = rows.reduce((s, r) => s + r.amount, 0);
-  const taxRate = parseFloat($('poTaxRate').value);
-  const tax = subtotal * (taxRate / 100);
-  const total = subtotal + tax;
+  const cur        = 'RM';
+  const rows       = getRows('po');
+  const subtotal   = rows.reduce((s, r) => s + r.amount, 0);
+  const taxRate    = parseFloat($('poTaxRate').value);
+  const tax        = subtotal * (taxRate / 100);
+  const total      = subtotal + tax;
+  const supplierName = $('poSupplierName').value.trim();
 
-  $('pDocType').textContent = 'PURCHASE ORDER';
-  $('pDocNumber').textContent = $('poNumber').value;
-  $('pDocDate').textContent = fmtDate($('poDate').value);
-  $('pDocDateLabel2').textContent = 'Delivery';
-  $('pDocDate2').textContent = fmtDate($('poDeliveryDate').value);
-  setStatusBadge($('poStatus').value);
-  $('pToLabel').textContent = 'TO (SUPPLIER)';
-  $('pToName').textContent = $('poSupplierName').value || '—';
-  $('pToAddress').textContent = $('poSupplierAddress').value || '—';
-  $('pToContact').textContent = $('poSupplierContact').value
-    ? `Contact: ${$('poSupplierContact').value}` : '—';
-  $('pToEmail').textContent = $('poSupplierEmail').value || '';
-  $('pToExtra').textContent = $('poSupplierSST').value
+  // Header branding — supplier is the principal
+  $('pDocLogo').textContent  = '🏢';
+  $('pFromName').textContent = supplierName || 'Supplier Name';
+  $('pFromReg').textContent  = $('poSupplierSST').value
     ? `SST Reg: ${$('poSupplierSST').value}` : '';
+  $('pAgentLine').textContent = 'via Karipap Bonda Enterprise (Authorized Agent)';
+
+  // Doc meta
+  $('pDocType').textContent      = 'PURCHASE ORDER';
+  $('pDocNumber').textContent    = $('poNumber').value;
+  $('pDocDate').textContent      = fmtDate($('poDate').value);
+  $('pDocDateLabel2').textContent = 'Delivery Date';
+  $('pDocDate2').textContent     = fmtDate($('poDeliveryDate').value);
+  setStatusBadge($('poStatus').value);
+
+  // FROM box — Supplier (principal)
+  $('pFromLabel').textContent   = 'FROM (SUPPLIER / PRINCIPAL)';
+  $('pFromNameBox').textContent = supplierName || '—';
+  $('pFromAddr').textContent    = $('poSupplierAddress').value || '—';
+  $('pFromContact').textContent = $('poSupplierContact').value
+    ? `Contact: ${$('poSupplierContact').value}` : '';
+  $('pFromEmail').textContent   = $('poSupplierPhone').value || '';
+  $('pFromExtra').textContent   = $('poSupplierEmail').value || '';
+
+  // TO box — Buyer
+  $('pToLabel').textContent   = 'BUYER / DELIVER TO';
+  const buyerName = $('poBuyerName').value.trim();
+  const buyerCo   = $('poBuyerCompany').value.trim();
+  $('pToName').textContent    = buyerName || '—';
+  $('pToAddress').textContent = buyerCo || '';
+  $('pToContact').textContent = $('poBuyerAddress').value || '—';
+  $('pToEmail').textContent   = $('poBuyerPhone').value || '';
+  $('pToExtra').textContent   = $('poBuyerEmail').value || '';
 
   renderPreviewItems(rows, cur);
 
-  $('pSubtotal').textContent = fmt(subtotal, cur);
-  $('pTaxLabel').textContent = `SST (${taxRate}%)`;
-  $('pTaxAmt').textContent = fmt(tax, cur);
+  $('pSubtotal').textContent  = fmt(subtotal, cur);
+  $('pTaxLabel').textContent  = `SST (${taxRate}%)`;
+  $('pTaxAmt').textContent    = fmt(tax, cur);
   $('pGrandTotal').textContent = fmt(total, cur);
   $('pTotalLabel').textContent = 'Total';
   $('pDiscountTr').classList.add('d-none');
 
   const notes = $('poDeliveryNotes').value;
   $('pNotes').innerHTML = notes
-    ? `<strong>Delivery Instructions:</strong><br>${escHtml(notes)}`
-    : '';
-
+    ? `<strong>Delivery Instructions:</strong><br>${escHtml(notes)}` : '';
   $('pTerms').textContent = $('poTerms').value;
   $('pBankBlock').classList.add('d-none');
+
+  $('pSigLabel1').textContent = `Authorised — ${supplierName || 'Supplier'}`;
   $('pSigLabel2').textContent = 'Received / Acknowledged';
+  $('pFooterNote').textContent =
+    `This Purchase Order is prepared by Karipap Bonda Enterprise as Authorized Agent` +
+    (supplierName ? ` on behalf of ${supplierName}` : '') +
+    ` • hello@karipapbonda.my`;
 }
 
+// ---- INVOICE ----
 function renderInvoice() {
-  const sym = $('invCurrency').value;
-  const rows = getRows('inv');
+  const sym      = $('invCurrency').value;
+  const rows     = getRows('inv');
   const subtotal = rows.reduce((s, r) => s + r.amount, 0);
-  const taxRate = parseFloat($('invTaxRate').value);
-  const dv = parseFloat($('invDiscountValue').value) || 0;
-  const dt = $('invDiscountType').value;
+  const taxRate  = parseFloat($('invTaxRate').value);
+  const dv       = parseFloat($('invDiscountValue').value) || 0;
+  const dt       = $('invDiscountType').value;
   const discount = dt === 'pct' ? subtotal * (dv / 100) : Math.min(dv, subtotal);
-  const taxable = subtotal - discount;
-  const tax = taxable * (taxRate / 100);
-  const total = taxable + tax;
+  const taxable  = subtotal - discount;
+  const tax      = taxable * (taxRate / 100);
+  const total    = taxable + tax;
 
-  $('pDocType').textContent = 'INVOICE';
-  $('pDocNumber').textContent = $('invNumber').value;
-  $('pDocDate').textContent = fmtDate($('invDate').value);
+  // Header branding — Karipap Bonda is the issuer
+  $('pDocLogo').textContent  = '🥟';
+  $('pFromName').textContent = 'Karipap Bonda Enterprise';
+  $('pFromReg').textContent  = '(002345678-K)';
+  $('pAgentLine').textContent = '';
+
+  // Doc meta
+  $('pDocType').textContent       = 'INVOICE';
+  $('pDocNumber').textContent     = $('invNumber').value;
+  $('pDocDate').textContent       = fmtDate($('invDate').value);
   $('pDocDateLabel2').textContent = 'Due Date';
-  $('pDocDate2').textContent = fmtDate($('invDueDate').value);
+  $('pDocDate2').textContent      = fmtDate($('invDueDate').value);
   setStatusBadge($('invStatus').value);
-  $('pToLabel').textContent = 'BILL TO (CUSTOMER)';
 
+  // FROM box — Karipap Bonda
+  $('pFromLabel').textContent   = 'FROM';
+  $('pFromNameBox').textContent = 'Karipap Bonda Enterprise';
+  $('pFromAddr').textContent    = 'No. 12, Jalan Bonda Maju, Kampung Baru';
+  $('pFromContact').textContent = '50300 Kuala Lumpur, Malaysia';
+  $('pFromEmail').textContent   = '+60 12-345 6789 | hello@karipapbonda.my';
+  $('pFromExtra').textContent   = 'SST: W10-1234-12345678';
+
+  // TO box — Customer
+  $('pToLabel').textContent   = 'BILL TO (CUSTOMER)';
   const custName = $('invCustomerName').value;
-  const custCo = $('invCustomerCompany').value;
-  $('pToName').textContent = custName || '—';
+  const custCo   = $('invCustomerCompany').value;
+  $('pToName').textContent    = custName || '—';
   $('pToAddress').textContent = custCo || '';
   $('pToContact').textContent = $('invCustomerAddress').value || '—';
-  $('pToEmail').textContent = $('invCustomerPhone').value || '';
-  $('pToExtra').textContent = $('invCustomerEmail').value || '';
+  $('pToEmail').textContent   = $('invCustomerPhone').value || '';
+  $('pToExtra').textContent   = $('invCustomerEmail').value || '';
 
   renderPreviewItems(rows, sym);
 
-  $('pSubtotal').textContent = fmt(subtotal, sym);
-  $('pTaxLabel').textContent = `SST (${taxRate}%)`;
-  $('pTaxAmt').textContent = fmt(tax, sym);
+  $('pSubtotal').textContent   = fmt(subtotal, sym);
+  $('pTaxLabel').textContent   = `SST (${taxRate}%)`;
+  $('pTaxAmt').textContent     = fmt(tax, sym);
   $('pGrandTotal').textContent = fmt(total, sym);
   $('pTotalLabel').textContent = 'Total Due';
 
@@ -281,29 +308,32 @@ function renderInvoice() {
     ? `<strong>Note:</strong><br>${escHtml(notes)}`
     : `<strong>Payment Terms:</strong> ${escHtml(terms)}`;
 
-  const bank = $('invBankName').value;
-  const acc = $('invBankAcc').value;
-  const acName = $('invBankName2').value;
+  const bank    = $('invBankName').value;
+  const acc     = $('invBankAcc').value;
+  const acName  = $('invBankName2').value;
   const duitnow = $('invDuitNow').value;
 
   if (bank || acc) {
     $('pBankBlock').classList.remove('d-none');
-    $('pBankDetails').innerHTML = `
-      ${bank ? `<div>${escHtml(bank)}</div>` : ''}
-      ${acName ? `<div>${escHtml(acName)}</div>` : ''}
-      ${acc ? `<div>Acc: ${escHtml(acc)}</div>` : ''}
-      ${duitnow ? `<div>DuitNow: ${escHtml(duitnow)}</div>` : ''}
-    `;
+    $('pBankDetails').innerHTML = [
+      bank    && `<div>${escHtml(bank)}</div>`,
+      acName  && `<div>${escHtml(acName)}</div>`,
+      acc     && `<div>Acc: ${escHtml(acc)}</div>`,
+      duitnow && `<div>DuitNow: ${escHtml(duitnow)}</div>`,
+    ].filter(Boolean).join('');
   } else {
     $('pBankBlock').classList.add('d-none');
   }
 
-  $('pTerms').textContent = '';
+  $('pTerms').textContent    = '';
+  $('pSigLabel1').textContent = 'Authorised — Karipap Bonda';
   $('pSigLabel2').textContent = 'Customer Signature';
+  $('pFooterNote').textContent =
+    'Karipap Bonda Enterprise (002345678-K) • hello@karipapbonda.my • +60 12-345 6789';
 }
 
 function renderPreviewItems(rows, sym) {
-  const tbody = $('pItemsBody');
+  const tbody  = $('pItemsBody');
   const filled = rows.filter(r => r.desc || r.qty || r.price);
   if (!filled.length) {
     tbody.innerHTML = `<tr class="pdoc-empty-row"><td colspan="6">No items added yet</td></tr>`;
@@ -330,34 +360,38 @@ function setStatusBadge(val) {
 // ===== ZOOM =====
 function setZoom(z) {
   state.zoom = Math.min(Math.max(z, 0.4), 1.4);
-  $('printableDoc').style.transform = `scale(${state.zoom})`;
+  $('printableDoc').style.transform       = `scale(${state.zoom})`;
   $('printableDoc').style.transformOrigin = 'top center';
-  $('previewScaler').style.minHeight = `${Math.round(900 * state.zoom)}px`;
+  $('previewScaler').style.minHeight      = `${Math.round(900 * state.zoom)}px`;
 }
 
 // ===== SAVE =====
 function saveDoc() {
-  const t = state.activeTab;
-  const rows = getRows(t);
+  const t      = state.activeTab;
+  const rows   = getRows(t);
   const subtotal = rows.reduce((s, r) => s + r.amount, 0);
 
+  const party = t === 'po'
+    ? ($('poSupplierName').value || $('poBuyerName').value)
+    : $('invCustomerName').value;
+
   const doc = {
-    id: Date.now(),
-    type: t,
-    number: t === 'po' ? $('poNumber').value : $('invNumber').value,
-    date: t === 'po' ? $('poDate').value : $('invDate').value,
-    party: t === 'po' ? $('poSupplierName').value : $('invCustomerName').value,
-    total: subtotal,
-    status: t === 'po' ? $('poStatus').value : $('invStatus').value,
+    id:      Date.now(),
+    type:    t,
+    number:  t === 'po' ? $('poNumber').value : $('invNumber').value,
+    date:    t === 'po' ? $('poDate').value   : $('invDate').value,
+    party,
+    total:   subtotal,
+    status:  t === 'po' ? $('poStatus').value : $('invStatus').value,
     savedAt: new Date().toISOString(),
+    savedBy: Auth.session()?.displayName || 'Unknown',
   };
 
   state.saved.unshift(doc);
   localStorage.setItem('kb_docs', JSON.stringify(state.saved));
 
-  // Bump doc number for next
-  if (t === 'po') $('poNumber').value = genDocNum('PO');
-  else $('invNumber').value = genDocNum('INV');
+  if (t === 'po') $('poNumber').value  = genDocNum('PO');
+  else            $('invNumber').value = genDocNum('INV');
 
   showToast(`<i class="bi bi-check-circle-fill me-2"></i>${doc.number} saved!`);
 }
@@ -366,20 +400,28 @@ function saveDoc() {
 function resetForm() {
   const t = state.activeTab;
   if (t === 'po') {
-    ['poSupplierName','poSupplierAddress','poSupplierContact','poSupplierPhone','poSupplierEmail','poSupplierSST','poDeliveryNotes','poTerms'].forEach(id => $(id).value = '');
+    [
+      'poSupplierName','poSupplierAddress','poSupplierContact',
+      'poSupplierPhone','poSupplierEmail','poSupplierSST',
+      'poBuyerName','poBuyerCompany','poBuyerAddress','poBuyerPhone','poBuyerEmail',
+      'poDeliveryNotes','poTerms',
+    ].forEach(id => $(id).value = '');
     $('poItemsBody').innerHTML = '';
     addRow('po'); addRow('po');
-    $('poDate').value = today();
+    $('poDate').value         = today();
     $('poDeliveryDate').value = addDays(today(), 7);
-    $('poStatus').value = 'draft';
+    $('poStatus').value       = 'draft';
   } else {
-    ['invCustomerName','invCustomerCompany','invCustomerAddress','invCustomerPhone','invCustomerEmail','invNotes'].forEach(id => $(id).value = '');
+    [
+      'invCustomerName','invCustomerCompany','invCustomerAddress',
+      'invCustomerPhone','invCustomerEmail','invNotes',
+    ].forEach(id => $(id).value = '');
     $('invDiscountValue').value = 0;
     $('invItemsBody').innerHTML = '';
     addRow('inv'); addRow('inv');
-    $('invDate').value = today();
+    $('invDate').value    = today();
     $('invDueDate').value = addDays(today(), 14);
-    $('invStatus').value = 'draft';
+    $('invStatus').value  = 'draft';
   }
   calcTotals(t);
   updatePreview();
@@ -392,15 +434,19 @@ function openHistory() {
     body.innerHTML = '<p class="text-muted text-center py-4">No saved documents yet.</p>';
   } else {
     body.innerHTML = state.saved.map(doc => `
-      <div class="history-item" data-id="${doc.id}">
+      <div class="history-item">
         <div class="d-flex align-items-center gap-3">
           <span class="history-badge ${doc.type}">${doc.type === 'po' ? 'PO' : 'INV'}</span>
           <div>
             <div class="fw-semibold small">${escHtml(doc.number)}</div>
-            <div class="text-muted" style="font-size:.75rem">${escHtml(doc.party || '—')} • ${fmtDate(doc.date)}</div>
+            <div class="text-muted" style="font-size:.75rem">
+              ${escHtml(doc.party || '—')} &bull; ${fmtDate(doc.date)}
+              ${doc.savedBy ? `<span class="ms-2 text-gold-muted">by ${escHtml(doc.savedBy)}</span>` : ''}
+            </div>
           </div>
         </div>
         <div class="d-flex align-items-center gap-3">
+          <span class="history-status status-${doc.status}">${escHtml(doc.status)}</span>
           <div class="fw-bold small">RM ${doc.total.toFixed(2)}</div>
           <button class="btn btn-sm btn-outline-danger btn-delete-hist" data-id="${doc.id}" title="Delete">
             <i class="bi bi-trash"></i>
@@ -425,8 +471,7 @@ function openHistory() {
 // ===== TOAST =====
 function showToast(msg) {
   $('toastMsg').innerHTML = msg;
-  const toast = bootstrap.Toast.getOrCreateInstance($('saveToast'));
-  toast.show();
+  bootstrap.Toast.getOrCreateInstance($('saveToast')).show();
 }
 
 // ===== SECURITY: HTML ESCAPE =====

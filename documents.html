@@ -12,6 +12,10 @@
 </head>
 <body class="doc-body">
 
+  <!-- Auth guard — runs before page renders -->
+  <script src="js/auth.js"></script>
+  <script>Auth.guard();</script>
+
   <!-- ===== TOP BAR ===== -->
   <div class="doc-topbar">
     <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
@@ -19,10 +23,14 @@
         <span>🥟</span> Karipap <strong>Bonda</strong>
       </a>
       <div class="d-flex align-items-center gap-3">
-        <span class="topbar-label">Document Manager</span>
-        <a href="index.html" class="btn btn-sm btn-outline-gold">
+        <span class="topbar-label d-none d-sm-inline">Document Manager</span>
+        <span class="topbar-user" id="topbarUser"></span>
+        <a href="index.html" class="btn btn-sm btn-outline-gold d-none d-md-inline-flex">
           <i class="bi bi-arrow-left me-1"></i> Back to Site
         </a>
+        <button class="btn btn-sm btn-logout" id="btnLogout">
+          <i class="bi bi-box-arrow-right me-1"></i> Logout
+        </button>
       </div>
     </div>
   </div>
@@ -95,7 +103,7 @@
                 <label class="form-label">Status</label>
                 <select class="form-select" id="poStatus">
                   <option value="draft">Draft</option>
-                  <option value="sent">Sent to Supplier</option>
+                  <option value="sent">Sent</option>
                   <option value="confirmed">Confirmed</option>
                   <option value="received">Received</option>
                 </select>
@@ -103,19 +111,22 @@
             </div>
           </div>
 
-          <!-- Supplier Info -->
-          <div class="form-card">
+          <!-- ===== SUPPLIER (PRINCIPAL — ON BEHALF OF) ===== -->
+          <div class="form-card form-card-highlight">
             <div class="form-card-title">
-              <i class="bi bi-building text-gold"></i> Supplier Information
+              <i class="bi bi-building-fill text-gold"></i> Supplier — Principal
+              <span class="form-card-sub">Karipap Bonda acts on behalf of this supplier</span>
             </div>
             <div class="row g-3">
               <div class="col-12">
-                <label class="form-label">Supplier / Company Name</label>
-                <input type="text" class="form-control" id="poSupplierName" placeholder="e.g. Rempah Segar Sdn Bhd" />
+                <label class="form-label">Supplier / Company Name <span class="required-star">*</span></label>
+                <input type="text" class="form-control" id="poSupplierName"
+                  placeholder="e.g. Rempah Segar Sdn Bhd" required />
               </div>
               <div class="col-12">
-                <label class="form-label">Address</label>
-                <textarea class="form-control" id="poSupplierAddress" rows="2" placeholder="No. 5, Jalan Industri 3, Shah Alam, Selangor"></textarea>
+                <label class="form-label">Registered Address</label>
+                <textarea class="form-control" id="poSupplierAddress" rows="2"
+                  placeholder="No. 5, Jalan Industri 3, 40150 Shah Alam, Selangor"></textarea>
               </div>
               <div class="col-sm-6">
                 <label class="form-label">Contact Person</label>
@@ -136,6 +147,37 @@
             </div>
           </div>
 
+          <!-- ===== BUYER / DELIVER TO ===== -->
+          <div class="form-card">
+            <div class="form-card-title">
+              <i class="bi bi-person-lines-fill text-gold"></i> Buyer / Deliver To
+              <span class="form-card-sub">The party receiving this Purchase Order</span>
+            </div>
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label class="form-label">Buyer Name <span class="required-star">*</span></label>
+                <input type="text" class="form-control" id="poBuyerName" placeholder="Ahmad Abdullah" />
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Company (optional)</label>
+                <input type="text" class="form-control" id="poBuyerCompany" placeholder="Syarikat XYZ Sdn Bhd" />
+              </div>
+              <div class="col-12">
+                <label class="form-label">Delivery Address</label>
+                <textarea class="form-control" id="poBuyerAddress" rows="2"
+                  placeholder="No. 12, Jalan Bonda Maju, Kampung Baru, 50300 Kuala Lumpur"></textarea>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Phone / WhatsApp</label>
+                <input type="text" class="form-control" id="poBuyerPhone" placeholder="+60 12-345 6789" />
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" id="poBuyerEmail" placeholder="buyer@email.com" />
+              </div>
+            </div>
+          </div>
+
           <!-- Line Items -->
           <div class="form-card">
             <div class="form-card-title d-flex justify-content-between align-items-center">
@@ -149,16 +191,14 @@
                 <thead>
                   <tr>
                     <th style="width:40%">Description</th>
-                    <th style="width:12%">Unit</th>
-                    <th style="width:13%">Qty</th>
-                    <th style="width:16%">Unit Price (RM)</th>
+                    <th style="width:10%">Unit</th>
+                    <th style="width:12%">Qty</th>
+                    <th style="width:17%">Unit Price (RM)</th>
                     <th style="width:14%">Amount (RM)</th>
-                    <th style="width:5%"></th>
+                    <th style="width:7%"></th>
                   </tr>
                 </thead>
-                <tbody id="poItemsBody">
-                  <!-- rows injected by JS -->
-                </tbody>
+                <tbody id="poItemsBody"></tbody>
               </table>
             </div>
 
@@ -193,12 +233,14 @@
             </div>
             <div class="row g-3">
               <div class="col-12">
-                <label class="form-label">Delivery Instructions</label>
-                <textarea class="form-control" id="poDeliveryNotes" rows="2" placeholder="Please deliver to our kitchen address..."></textarea>
+                <label class="form-label">Delivery / Special Instructions</label>
+                <textarea class="form-control" id="poDeliveryNotes" rows="2"
+                  placeholder="Please deliver to kitchen address. Handle with care."></textarea>
               </div>
               <div class="col-12">
                 <label class="form-label">Terms &amp; Conditions</label>
-                <textarea class="form-control" id="poTerms" rows="2" placeholder="Payment within 30 days of delivery. Goods must match specifications."></textarea>
+                <textarea class="form-control" id="poTerms" rows="2"
+                  placeholder="Payment within 30 days of delivery. Goods must match specifications."></textarea>
               </div>
             </div>
           </div>
@@ -276,7 +318,8 @@
               </div>
               <div class="col-12">
                 <label class="form-label">Delivery / Billing Address</label>
-                <textarea class="form-control" id="invCustomerAddress" rows="2" placeholder="No. 10, Jalan Damai, Taman Maju, 50480 Kuala Lumpur"></textarea>
+                <textarea class="form-control" id="invCustomerAddress" rows="2"
+                  placeholder="No. 10, Jalan Damai, Taman Maju, 50480 Kuala Lumpur"></textarea>
               </div>
               <div class="col-sm-6">
                 <label class="form-label">Phone / WhatsApp</label>
@@ -302,24 +345,22 @@
                 <thead>
                   <tr>
                     <th style="width:40%">Description</th>
-                    <th style="width:12%">Unit</th>
-                    <th style="width:13%">Qty</th>
-                    <th style="width:16%">Unit Price</th>
+                    <th style="width:10%">Unit</th>
+                    <th style="width:12%">Qty</th>
+                    <th style="width:17%">Unit Price</th>
                     <th style="width:14%">Amount</th>
-                    <th style="width:5%"></th>
+                    <th style="width:7%"></th>
                   </tr>
                 </thead>
-                <tbody id="invItemsBody">
-                  <!-- rows injected by JS -->
-                </tbody>
+                <tbody id="invItemsBody"></tbody>
               </table>
             </div>
 
-            <!-- Discount row -->
             <div class="discount-row mt-3">
               <label class="form-label mb-1 small fw-semibold">Discount</label>
               <div class="d-flex gap-2 align-items-center">
-                <input type="number" class="form-control form-control-sm" id="invDiscountValue" value="0" min="0" style="max-width:90px;" />
+                <input type="number" class="form-control form-control-sm" id="invDiscountValue"
+                  value="0" min="0" style="max-width:90px;" />
                 <select class="form-select form-select-sm" id="invDiscountType" style="max-width:100px;">
                   <option value="pct">%</option>
                   <option value="fixed">RM</option>
@@ -328,7 +369,6 @@
               </div>
             </div>
 
-            <!-- Totals -->
             <div class="totals-block">
               <div class="total-row">
                 <span>Subtotal</span>
@@ -380,7 +420,8 @@
               </div>
               <div class="col-12">
                 <label class="form-label">Notes to Customer</label>
-                <textarea class="form-control" id="invNotes" rows="2" placeholder="Thank you for your order! Please retain this invoice for your records."></textarea>
+                <textarea class="form-control" id="invNotes" rows="2"
+                  placeholder="Thank you for your order! Please retain this invoice for your records."></textarea>
               </div>
             </div>
           </div>
@@ -427,31 +468,20 @@
             <!-- Doc Header -->
             <div class="pdoc-header">
               <div class="pdoc-brand">
-                <div class="pdoc-logo">🥟</div>
+                <div class="pdoc-logo" id="pDocLogo">🏢</div>
                 <div>
-                  <div class="pdoc-company">Karipap Bonda</div>
-                  <div class="pdoc-company-sub">Enterprise (002345678-K)</div>
+                  <div class="pdoc-company" id="pFromName">—</div>
+                  <div class="pdoc-company-sub" id="pFromReg"></div>
+                  <div class="pdoc-agent-line" id="pAgentLine"></div>
                 </div>
               </div>
               <div class="pdoc-meta">
                 <div class="pdoc-doctype" id="pDocType">PURCHASE ORDER</div>
                 <table class="pdoc-meta-table">
-                  <tr>
-                    <td>No.</td>
-                    <td id="pDocNumber">—</td>
-                  </tr>
-                  <tr>
-                    <td>Date</td>
-                    <td id="pDocDate">—</td>
-                  </tr>
-                  <tr>
-                    <td id="pDocDateLabel2">Delivery</td>
-                    <td id="pDocDate2">—</td>
-                  </tr>
-                  <tr>
-                    <td>Status</td>
-                    <td><span id="pDocStatus" class="pdoc-status-badge">Draft</span></td>
-                  </tr>
+                  <tr><td>No.</td><td id="pDocNumber">—</td></tr>
+                  <tr><td>Date</td><td id="pDocDate">—</td></tr>
+                  <tr><td id="pDocDateLabel2">Delivery</td><td id="pDocDate2">—</td></tr>
+                  <tr><td>Status</td><td><span id="pDocStatus" class="pdoc-status-badge">Draft</span></td></tr>
                 </table>
               </div>
             </div>
@@ -459,20 +489,20 @@
             <!-- From / To -->
             <div class="pdoc-parties">
               <div class="pdoc-party">
-                <div class="pdoc-party-label">FROM</div>
-                <div class="pdoc-party-name">Karipap Bonda Enterprise</div>
-                <div class="pdoc-party-detail">No. 12, Jalan Bonda Maju, Kampung Baru</div>
-                <div class="pdoc-party-detail">50300 Kuala Lumpur, Malaysia</div>
-                <div class="pdoc-party-detail">+60 12-345 6789 | hello@karipapbonda.my</div>
-                <div class="pdoc-party-detail">SST: W10-1234-12345678</div>
+                <div class="pdoc-party-label" id="pFromLabel">FROM (SUPPLIER)</div>
+                <div class="pdoc-party-name" id="pFromNameBox">—</div>
+                <div class="pdoc-party-detail" id="pFromAddr">—</div>
+                <div class="pdoc-party-detail" id="pFromContact">—</div>
+                <div class="pdoc-party-detail" id="pFromEmail"></div>
+                <div class="pdoc-party-detail" id="pFromExtra"></div>
               </div>
               <div class="pdoc-party pdoc-party-to">
-                <div class="pdoc-party-label" id="pToLabel">TO (SUPPLIER)</div>
+                <div class="pdoc-party-label" id="pToLabel">BUYER / DELIVER TO</div>
                 <div class="pdoc-party-name" id="pToName">—</div>
                 <div class="pdoc-party-detail" id="pToAddress">—</div>
                 <div class="pdoc-party-detail" id="pToContact">—</div>
-                <div class="pdoc-party-detail" id="pToEmail">—</div>
-                <div class="pdoc-party-detail" id="pToExtra">—</div>
+                <div class="pdoc-party-detail" id="pToEmail"></div>
+                <div class="pdoc-party-detail" id="pToExtra"></div>
               </div>
             </div>
 
@@ -506,21 +536,15 @@
               </div>
               <div class="pdoc-totals-col">
                 <table class="pdoc-totals-table">
-                  <tr>
-                    <td>Subtotal</td>
-                    <td id="pSubtotal">RM 0.00</td>
-                  </tr>
+                  <tr><td>Subtotal</td><td id="pSubtotal">RM 0.00</td></tr>
                   <tr id="pDiscountTr" class="d-none">
-                    <td>Discount</td>
-                    <td id="pDiscount">– RM 0.00</td>
+                    <td>Discount</td><td id="pDiscount">– RM 0.00</td>
                   </tr>
                   <tr id="pTaxTr">
-                    <td id="pTaxLabel">SST (6%)</td>
-                    <td id="pTaxAmt">RM 0.00</td>
+                    <td id="pTaxLabel">SST (6%)</td><td id="pTaxAmt">RM 0.00</td>
                   </tr>
                   <tr class="pdoc-total-grand">
-                    <td id="pTotalLabel">Total</td>
-                    <td id="pGrandTotal">RM 0.00</td>
+                    <td id="pTotalLabel">Total</td><td id="pGrandTotal">RM 0.00</td>
                   </tr>
                 </table>
               </div>
@@ -533,7 +557,7 @@
             <div class="pdoc-signatures">
               <div class="pdoc-sig-block">
                 <div class="pdoc-sig-line"></div>
-                <div class="pdoc-sig-label">Authorised by — Karipap Bonda</div>
+                <div class="pdoc-sig-label" id="pSigLabel1">Authorised Signature</div>
               </div>
               <div class="pdoc-sig-block">
                 <div class="pdoc-sig-line"></div>
@@ -541,8 +565,8 @@
               </div>
             </div>
 
-            <div class="pdoc-footer-note">
-              This document was generated by Karipap Bonda Enterprise • hello@karipapbonda.my
+            <div class="pdoc-footer-note" id="pFooterNote">
+              Prepared by Karipap Bonda Enterprise (Authorized Agent) • hello@karipapbonda.my
             </div>
 
           </div><!-- /printable-doc -->
@@ -579,7 +603,6 @@
     </div>
   </div>
 
-  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="js/documents.js"></script>
 </body>
