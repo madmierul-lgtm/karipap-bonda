@@ -8,7 +8,6 @@
 const state = {
   activeTab: 'po',
   zoom: 1,
-  saved: JSON.parse(localStorage.getItem('kb_docs') || '[]'),
 };
 
 // ===== HELPERS =====
@@ -28,14 +27,16 @@ const fmtDate = s => {
 };
 const genDocNum = prefix => {
   const now = new Date();
-  const yy = String(now.getFullYear()).slice(2);
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const seq = String(state.saved.filter(d => d.type === prefix).length + 1).padStart(4, '0');
+  const yy  = String(now.getFullYear()).slice(2);
+  const mm  = String(now.getMonth() + 1).padStart(2, '0');
+  const seq = String(DB.countByType(prefix) + 1).padStart(4, '0');
   return `${prefix}-${yy}${mm}-${seq}`;
 };
 
 // ===== INIT =====
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  DB.init();
+
   // Show logged-in user
   const session = Auth.session();
   if (session) {
@@ -52,6 +53,23 @@ document.addEventListener('DOMContentLoaded', () => {
   addRow('inv'); addRow('inv');
   bindEvents();
   updatePreview();
+
+  // Try to auto-reconnect to previously selected file
+  const ac = await DB.autoConnect();
+  if (ac.needsGesture) {
+    $('reconnectMsg').textContent = `"${ac.name}" found — tap to reconnect.`;
+    $('reconnectBanner').classList.remove('d-none');
+    $('btnReconnect').addEventListener('click', async () => {
+      const r = await DB.reconnect();
+      if (r.ok) {
+        $('reconnectBanner').classList.add('d-none');
+        showToast(`<i class="bi bi-hdd-fill me-2"></i>Reconnected to <strong>${r.name}</strong>`);
+        refreshRecords();
+      }
+    }, { once: true });
+  }
+
+  refreshRecords();
 });
 
 function initDates() {
@@ -89,6 +107,19 @@ function bindEvents() {
   $('btnHistory').addEventListener('click', openHistory);
   $('btnZoomIn').addEventListener('click', () => setZoom(state.zoom + 0.1));
   $('btnZoomOut').addEventListener('click', () => setZoom(state.zoom - 0.1));
+
+  $('btnConnectDb').addEventListener('click', async () => {
+    const result = await DB.connect();
+    if (result.ok) {
+      showToast(`<i class="bi bi-hdd-fill me-2"></i>Connected to <strong>${result.name}</strong>`);
+      $('reconnectBanner').classList.add('d-none');
+      refreshRecords();
+    } else if (result.msg !== 'cancelled') {
+      showToast(`<i class="bi bi-exclamation-triangle-fill me-2"></i>${result.msg}`);
+    }
+  });
+
+  $('recordsSearch').addEventListener('input', e => refreshRecords(e.target.value));
 }
 
 // ===== TAB SWITCH =====
@@ -366,34 +397,93 @@ function setZoom(z) {
 }
 
 // ===== SAVE =====
-function saveDoc() {
-  const t      = state.activeTab;
-  const rows   = getRows(t);
-  const subtotal = rows.reduce((s, r) => s + r.amount, 0);
+async function saveDoc() {
+  const t    = state.activeTab;
+  const rows = getRows(t);
+  const user = Auth.session()?.displayName || 'Unknown';
 
-  const party = t === 'po'
-    ? ($('poSupplierName').value || $('poBuyerName').value)
-    : $('invCustomerName').value;
+  if (t === 'po') {
+    const subtotal = rows.reduce((s, r) => s + r.amount, 0);
+    const taxRate  = parseFloat($('poTaxRate').value) || 0;
+    const tax      = subtotal * (taxRate / 100);
 
-  const doc = {
-    id:      Date.now(),
-    type:    t,
-    number:  t === 'po' ? $('poNumber').value : $('invNumber').value,
-    date:    t === 'po' ? $('poDate').value   : $('invDate').value,
-    party,
-    total:   subtotal,
-    status:  t === 'po' ? $('poStatus').value : $('invStatus').value,
-    savedAt: new Date().toISOString(),
-    savedBy: Auth.session()?.displayName || 'Unknown',
-  };
+    const po = {
+      number:          $('poNumber').value,
+      date:            $('poDate').value,
+      deliveryDate:    $('poDeliveryDate').value,
+      status:          $('poStatus').value,
+      supplierName:    $('poSupplierName').value,
+      supplierAddress: $('poSupplierAddress').value,
+      supplierContact: $('poSupplierContact').value,
+      supplierPhone:   $('poSupplierPhone').value,
+      supplierEmail:   $('poSupplierEmail').value,
+      supplierSST:     $('poSupplierSST').value,
+      buyerName:       $('poBuyerName').value,
+      buyerCompany:    $('poBuyerCompany').value,
+      buyerAddress:    $('poBuyerAddress').value,
+      buyerPhone:      $('poBuyerPhone').value,
+      buyerEmail:      $('poBuyerEmail').value,
+      items:           rows,
+      subtotal,
+      taxRate,
+      tax,
+      total:           subtotal - 0 + tax,
+      deliveryNotes:   $('poDeliveryNotes').value,
+      terms:           $('poTerms').value,
+      savedBy:         user,
+    };
 
-  state.saved.unshift(doc);
-  localStorage.setItem('kb_docs', JSON.stringify(state.saved));
+    const { po: saved, invoice } = await DB.savePO(po);
+    $('poNumber').value = genDocNum('PO');
+    showToast(
+      `<i class="bi bi-check-circle-fill me-2"></i>${saved.number} saved! ` +
+      `Invoice <strong>${invoice.number}</strong> auto-generated.`
+    );
+    refreshRecords();
+  } else {
+    const subtotal      = rows.reduce((s, r) => s + r.amount, 0);
+    const taxRate       = parseFloat($('invTaxRate').value) || 0;
+    const dv            = parseFloat($('invDiscountValue').value) || 0;
+    const dt            = $('invDiscountType').value;
+    const discountAmount = dt === 'pct' ? subtotal * (dv / 100) : Math.min(dv, subtotal);
+    const taxable       = subtotal - discountAmount;
+    const tax           = taxable * (taxRate / 100);
 
-  if (t === 'po') $('poNumber').value  = genDocNum('PO');
-  else            $('invNumber').value = genDocNum('INV');
+    const inv = {
+      number:          $('invNumber').value,
+      date:            $('invDate').value,
+      dueDate:         $('invDueDate').value,
+      status:          $('invStatus').value,
+      paymentTerms:    $('invPaymentTerms').value,
+      currency:        $('invCurrency').value,
+      customerName:    $('invCustomerName').value,
+      customerCompany: $('invCustomerCompany').value,
+      customerAddress: $('invCustomerAddress').value,
+      customerPhone:   $('invCustomerPhone').value,
+      customerEmail:   $('invCustomerEmail').value,
+      items:           rows,
+      subtotal,
+      discountValue:   dv,
+      discountType:    dt,
+      discountAmount,
+      taxRate,
+      tax,
+      total:           taxable + tax,
+      bankName:        $('invBankName').value,
+      bankAcc:         $('invBankAcc').value,
+      bankAccountName: $('invBankName2').value,
+      duitNow:         $('invDuitNow').value,
+      notes:           $('invNotes').value,
+      linkedPOId:      null,
+      linkedPONumber:  null,
+      savedBy:         user,
+    };
 
-  showToast(`<i class="bi bi-check-circle-fill me-2"></i>${doc.number} saved!`);
+    const saved = await DB.saveInvoice(inv);
+    $('invNumber').value = genDocNum('INV');
+    showToast(`<i class="bi bi-check-circle-fill me-2"></i>${saved.number} saved!`);
+    refreshRecords();
+  }
 }
 
 // ===== RESET =====
@@ -429,43 +519,233 @@ function resetForm() {
 
 // ===== HISTORY =====
 function openHistory() {
-  const body = $('historyBody');
-  if (!state.saved.length) {
+  const body    = $('historyBody');
+  const records = DB.getHistory();
+
+  if (!records.length) {
     body.innerHTML = '<p class="text-muted text-center py-4">No saved documents yet.</p>';
   } else {
-    body.innerHTML = state.saved.map(doc => `
-      <div class="history-item">
-        <div class="d-flex align-items-center gap-3">
-          <span class="history-badge ${doc.type}">${doc.type === 'po' ? 'PO' : 'INV'}</span>
-          <div>
-            <div class="fw-semibold small">${escHtml(doc.number)}</div>
-            <div class="text-muted" style="font-size:.75rem">
-              ${escHtml(doc.party || '—')} &bull; ${fmtDate(doc.date)}
-              ${doc.savedBy ? `<span class="ms-2 text-gold-muted">by ${escHtml(doc.savedBy)}</span>` : ''}
+    body.innerHTML = records.map(doc => {
+      const isPO  = doc._type === 'po';
+      const party = isPO ? (doc.supplierName || doc.buyerName) : doc.customerName;
+      const linked = isPO && doc.linkedInvoiceNumber
+        ? `<span class="linked-badge ms-2"><i class="bi bi-link-45deg"></i> ${escHtml(doc.linkedInvoiceNumber)}</span>`
+        : (!isPO && doc.linkedPONumber
+          ? `<span class="linked-badge ms-2"><i class="bi bi-link-45deg"></i> ${escHtml(doc.linkedPONumber)}</span>`
+          : '');
+
+      return `
+        <div class="history-item">
+          <div class="d-flex align-items-center gap-3">
+            <span class="history-badge ${doc._type}">${isPO ? 'PO' : 'INV'}</span>
+            <div>
+              <div class="fw-semibold small">${escHtml(doc.number)}${linked}</div>
+              <div class="text-muted" style="font-size:.75rem">
+                ${escHtml(party || '—')} &bull; ${fmtDate(doc.date)}
+                ${doc.savedBy ? `<span class="ms-2 text-gold-muted">by ${escHtml(doc.savedBy)}</span>` : ''}
+              </div>
             </div>
           </div>
+          <div class="d-flex align-items-center gap-3">
+            <span class="history-status status-${doc.status}">${escHtml(doc.status)}</span>
+            <div class="fw-bold small">RM ${(doc.total || 0).toFixed(2)}</div>
+            <button class="btn btn-sm btn-outline-warning btn-print-hist"
+              data-type="${doc._type}" data-id="${doc.id}" title="Open as PDF">
+              <i class="bi bi-printer-fill"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger btn-delete-hist"
+              data-type="${doc._type}" data-id="${doc.id}" title="Delete">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
         </div>
-        <div class="d-flex align-items-center gap-3">
-          <span class="history-status status-${doc.status}">${escHtml(doc.status)}</span>
-          <div class="fw-bold small">RM ${doc.total.toFixed(2)}</div>
-          <button class="btn btn-sm btn-outline-danger btn-delete-hist" data-id="${doc.id}" title="Delete">
-            <i class="bi bi-trash"></i>
-          </button>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
 
-    body.querySelectorAll('.btn-delete-hist').forEach(btn => {
+    body.querySelectorAll('.btn-print-hist').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        const id = parseInt(btn.dataset.id);
-        state.saved = state.saved.filter(d => d.id !== id);
-        localStorage.setItem('kb_docs', JSON.stringify(state.saved));
+        const doc = DB.getHistory().find(
+          d => d._type === btn.dataset.type && d.id === parseInt(btn.dataset.id)
+        );
+        if (doc) loadAndPrint(doc);
+      });
+    });
+
+    body.querySelectorAll('.btn-delete-hist').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        await DB.remove(btn.dataset.type, parseInt(btn.dataset.id));
         openHistory();
+        refreshRecords();
       });
     });
   }
   new bootstrap.Modal($('historyModal')).show();
+}
+
+// ===== RECORDS LISTING =====
+function refreshRecords(query = '') {
+  const wrap = $('recordsTableWrap');
+  let records = DB.getHistory();
+
+  if (query) {
+    const q = query.toLowerCase();
+    records = records.filter(d => {
+      const party = d._type === 'po'
+        ? (d.supplierName || d.buyerName || '')
+        : (d.customerName || '');
+      return (d.number || '').toLowerCase().includes(q)  ||
+             party.toLowerCase().includes(q)              ||
+             (d.status || '').toLowerCase().includes(q)  ||
+             d._type.includes(q);
+    });
+  }
+
+  if (!records.length) {
+    wrap.innerHTML = '<p class="text-muted text-center py-3 small">No records found.</p>';
+    return;
+  }
+
+  wrap.innerHTML = `
+    <div class="records-table-scroll">
+      <table class="records-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Number</th>
+            <th>Date</th>
+            <th>Party / Name</th>
+            <th class="text-end">Total (RM)</th>
+            <th>Status</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${records.map(doc => {
+            const isPO  = doc._type === 'po';
+            const party = isPO ? (doc.supplierName || doc.buyerName) : doc.customerName;
+            const linked = isPO && doc.linkedInvoiceNumber
+              ? `<span class="linked-badge ms-1"><i class="bi bi-link-45deg"></i>${escHtml(doc.linkedInvoiceNumber)}</span>`
+              : (!isPO && doc.linkedPONumber
+                ? `<span class="linked-badge ms-1"><i class="bi bi-link-45deg"></i>${escHtml(doc.linkedPONumber)}</span>`
+                : '');
+            return `
+              <tr>
+                <td><span class="history-badge ${doc._type}">${isPO ? 'PO' : 'INV'}</span></td>
+                <td class="fw-semibold small">${escHtml(doc.number)}${linked}</td>
+                <td class="small text-muted">${fmtDate(doc.date)}</td>
+                <td class="small">${escHtml(party || '—')}</td>
+                <td class="small fw-bold text-end">${(doc.total || 0).toFixed(2)}</td>
+                <td><span class="history-status status-${escHtml(doc.status)}">${escHtml(doc.status)}</span></td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-outline-warning btn-rec-print"
+                    data-type="${doc._type}" data-id="${doc.id}" title="Print / PDF">
+                    <i class="bi bi-printer-fill"></i>
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger btn-rec-delete ms-1"
+                    data-type="${doc._type}" data-id="${doc.id}" title="Delete">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  wrap.querySelectorAll('.btn-rec-print').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const doc = DB.getHistory().find(
+        d => d._type === btn.dataset.type && d.id === parseInt(btn.dataset.id)
+      );
+      if (doc) loadAndPrint(doc);
+    });
+  });
+
+  wrap.querySelectorAll('.btn-rec-delete').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await DB.remove(btn.dataset.type, parseInt(btn.dataset.id));
+      refreshRecords($('recordsSearch').value);
+    });
+  });
+}
+
+// ===== LOAD SAVED DOC INTO FORM & PRINT =====
+function loadAndPrint(doc) {
+  bootstrap.Modal.getInstance($('historyModal'))?.hide();
+
+  const t = doc._type;
+  switchTab(t);
+
+  if (t === 'po') {
+    $('poNumber').value          = doc.number          || '';
+    $('poDate').value            = doc.date            || '';
+    $('poDeliveryDate').value    = doc.deliveryDate     || '';
+    $('poStatus').value          = doc.status          || 'draft';
+    $('poSupplierName').value    = doc.supplierName     || '';
+    $('poSupplierAddress').value = doc.supplierAddress  || '';
+    $('poSupplierContact').value = doc.supplierContact  || '';
+    $('poSupplierPhone').value   = doc.supplierPhone    || '';
+    $('poSupplierEmail').value   = doc.supplierEmail    || '';
+    $('poSupplierSST').value     = doc.supplierSST      || '';
+    $('poBuyerName').value       = doc.buyerName        || '';
+    $('poBuyerCompany').value    = doc.buyerCompany     || '';
+    $('poBuyerAddress').value    = doc.buyerAddress     || '';
+    $('poBuyerPhone').value      = doc.buyerPhone       || '';
+    $('poBuyerEmail').value      = doc.buyerEmail       || '';
+    $('poDeliveryNotes').value   = doc.deliveryNotes    || '';
+    $('poTerms').value           = doc.terms            || '';
+    $('poTaxRate').value         = doc.taxRate          || 0;
+
+    $('poItemsBody').innerHTML = '';
+    (doc.items || []).forEach(item => {
+      addRow('po');
+      const tr = $('poItemsBody').lastElementChild;
+      tr.querySelector('.item-desc').value  = item.desc  || '';
+      tr.querySelector('.item-unit').value  = item.unit  || '';
+      tr.querySelector('.item-qty').value   = item.qty   || 0;
+      tr.querySelector('.item-price').value = item.price || 0;
+    });
+    if (!$('poItemsBody').children.length) { addRow('po'); addRow('po'); }
+  } else {
+    $('invNumber').value          = doc.number          || '';
+    $('invDate').value            = doc.date            || '';
+    $('invDueDate').value         = doc.dueDate         || '';
+    $('invStatus').value          = doc.status          || 'draft';
+    $('invPaymentTerms').value    = doc.paymentTerms    || '';
+    $('invCurrency').value        = doc.currency        || 'RM';
+    $('invCustomerName').value    = doc.customerName    || '';
+    $('invCustomerCompany').value = doc.customerCompany || '';
+    $('invCustomerAddress').value = doc.customerAddress || '';
+    $('invCustomerPhone').value   = doc.customerPhone   || '';
+    $('invCustomerEmail').value   = doc.customerEmail   || '';
+    $('invDiscountValue').value   = doc.discountValue   || 0;
+    $('invDiscountType').value    = doc.discountType    || 'pct';
+    $('invTaxRate').value         = doc.taxRate         || 0;
+    $('invBankName').value        = doc.bankName        || '';
+    $('invBankAcc').value         = doc.bankAcc         || '';
+    $('invBankName2').value       = doc.bankAccountName || '';
+    $('invDuitNow').value         = doc.duitNow         || '';
+    $('invNotes').value           = doc.notes           || '';
+
+    $('invItemsBody').innerHTML = '';
+    (doc.items || []).forEach(item => {
+      addRow('inv');
+      const tr = $('invItemsBody').lastElementChild;
+      tr.querySelector('.item-desc').value  = item.desc  || '';
+      tr.querySelector('.item-unit').value  = item.unit  || '';
+      tr.querySelector('.item-qty').value   = item.qty   || 0;
+      tr.querySelector('.item-price').value = item.price || 0;
+    });
+    if (!$('invItemsBody').children.length) { addRow('inv'); addRow('inv'); }
+  }
+
+  calcTotals(t);
+  updatePreview();
+
+  // Wait for modal close animation before opening print dialog
+  setTimeout(() => window.print(), 400);
 }
 
 // ===== TOAST =====

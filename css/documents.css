@@ -2,6 +2,98 @@
    KARIPAP BONDA — Documents Module Styles
    ================================================ */
 
+/* ===== LINKED DOCUMENT BADGE (PO ↔ Invoice) ===== */
+.linked-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  font-size: .68rem;
+  font-weight: 500;
+  color: #D4AF37;
+  background: rgba(212,175,55,.1);
+  border: 1px solid rgba(212,175,55,.3);
+  border-radius: 4px;
+  padding: .05rem .45rem;
+  vertical-align: middle;
+}
+
+/* ===== RECONNECT BANNER ===== */
+.reconnect-banner {
+  display: flex;
+  align-items: center;
+  background: #fff3cd;
+  border-bottom: 1px solid #ffc107;
+  color: #664d03;
+  font-size: .82rem;
+  font-weight: 500;
+  padding: .55rem 1.5rem;
+}
+
+/* ===== DB STATUS BADGE ===== */
+.db-status-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: .72rem;
+  font-weight: 500;
+  color: #6c757d;
+  background: #e9ecef;
+  border: 1px solid #dee2e6;
+  border-radius: 20px;
+  padding: .2rem .75rem;
+  white-space: nowrap;
+}
+.db-status-badge.connected {
+  color: #198754;
+  background: rgba(25,135,84,.1);
+  border-color: rgba(25,135,84,.3);
+}
+
+/* ===== RECORDS PANEL ===== */
+.records-panel {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e0e0e0;
+  padding: 1.5rem;
+}
+.records-title {
+  font-size: .9rem;
+  color: #D4AF37;
+}
+.records-search {
+  min-width: 260px;
+  max-width: 340px;
+  border-radius: 8px;
+  font-size: .82rem;
+}
+.records-table-scroll {
+  overflow-x: auto;
+}
+.records-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .82rem;
+}
+.records-table thead th {
+  padding: .6rem .75rem;
+  font-weight: 600;
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  color: #6c757d;
+  border-bottom: 2px solid #f0f0f0;
+  white-space: nowrap;
+}
+.records-table tbody tr {
+  border-bottom: 1px solid #f5f5f5;
+  transition: background .15s;
+}
+.records-table tbody tr:hover { background: #fafafa; }
+.records-table tbody td {
+  padding: .6rem .75rem;
+  vertical-align: middle;
+}
+.records-table tbody tr:last-child { border-bottom: none; }
+
 /* ===== OVERRIDES FOR DOC PAGE ===== */
 .doc-body {
   background: #F0F2F5;

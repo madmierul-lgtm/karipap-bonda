@@ -35,6 +35,15 @@
     </div>
   </div>
 
+  <!-- ===== RECONNECT BANNER ===== -->
+  <div id="reconnectBanner" class="reconnect-banner d-none">
+    <i class="bi bi-hdd me-2"></i>
+    <span id="reconnectMsg">Database file found — tap to reconnect.</span>
+    <button class="btn btn-sm btn-success ms-3" id="btnReconnect">
+      <i class="bi bi-plug-fill me-1"></i> Reconnect
+    </button>
+  </div>
+
   <div class="container-fluid px-4 pt-4 pb-5">
 
     <!-- ===== PAGE HEADER ===== -->
@@ -43,7 +52,10 @@
         <h1 class="doc-page-title">Document Manager</h1>
         <p class="text-muted mb-0">Create, preview and print Purchase Orders &amp; Invoices</p>
       </div>
-      <div class="col-auto d-flex gap-2">
+      <div class="col-auto d-flex gap-2 flex-wrap">
+        <button class="btn btn-outline-secondary btn-sm" id="btnConnectDb">
+          <i class="bi bi-folder2-open me-1"></i> Connect db
+        </button>
         <button class="btn btn-outline-secondary btn-sm" id="btnHistory">
           <i class="bi bi-clock-history me-1"></i> History
         </button>
@@ -574,6 +586,26 @@
       </div><!-- /preview panel -->
 
     </div><!-- /split view -->
+
+    <!-- ===== RECORDS LISTING ===== -->
+    <div class="records-panel mt-4" id="recordsSection">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div class="d-flex align-items-center gap-3">
+          <h6 class="fw-bold mb-0 records-title">
+            <i class="bi bi-table me-2"></i>Records
+          </h6>
+          <span id="dbStatus" class="db-status-badge">
+            <i class="bi bi-hdd me-1"></i>Local storage
+          </span>
+        </div>
+        <input type="search" id="recordsSearch" class="form-control form-control-sm records-search"
+               placeholder="Search by number, name, status, type..." />
+      </div>
+      <div id="recordsTableWrap">
+        <p class="text-muted text-center py-3 small">No records yet.</p>
+      </div>
+    </div>
+
   </div><!-- /container -->
 
   <!-- ===== SAVE SUCCESS TOAST ===== -->
@@ -604,6 +636,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="js/db.js"></script>
   <script src="js/documents.js"></script>
 </body>
 </html>
