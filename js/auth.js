@@ -9,7 +9,7 @@ const SESSION_TTL = 8 * 60 * 60 * 1000; // 8 hours
 
 // Credentials store — extend this object to add more users
 const CREDENTIALS = {
-  admin:   'bonda@1998',
+  admin:   'admin123',
   manager: 'karipap2024',
 };
 
