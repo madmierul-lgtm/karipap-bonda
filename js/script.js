@@ -2,7 +2,12 @@
    KARIPAP BONDA — Main Script
    ================================================ */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  // Connect to db.json automatically (uses stored handle from IndexedDB)
+  if (typeof DB !== 'undefined') {
+    DB.init();
+    await DB.autoConnect();
+  }
 
   // ===== NAVBAR SCROLL =====
   const nav = document.getElementById('mainNav');
@@ -98,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btnLoading.classList.remove('d-none');
       submitBtn.disabled = true;
 
-      setTimeout(() => {
+      setTimeout(async () => {
         // Collect form data
         const order = {
           id:        Date.now(),
@@ -112,10 +117,29 @@ document.addEventListener('DOMContentLoaded', () => {
           createdAt: new Date().toISOString(),
         };
 
-        // Save to localStorage so admin can see it in documents.html
-        const orders = JSON.parse(localStorage.getItem('kb_orders') || '[]');
-        orders.unshift(order);
-        localStorage.setItem('kb_orders', JSON.stringify(orders));
+        // Save order to db.json via DB module
+        if (typeof DB !== 'undefined') {
+          await DB.saveOrder(order);
+        }
+
+        // Send WhatsApp notification to admin
+        const d = new Date();
+        const tgl = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+        const msg = [
+          '🛒 *PESANAN BARU — Karipap Bonda*',
+          '─────────────────────',
+          `📅 Tarikh  : ${tgl}`,
+          `👤 Nama    : ${order.nama || '—'}`,
+          `📞 Telefon : ${order.telefon || '—'}`,
+          `📧 E-mel   : ${order.email || '—'}`,
+          `🥟 Perisa  : ${order.perisa || '—'}`,
+          `📦 Kuantiti: ${order.kuantiti || '—'}`,
+          order.mesej ? `📝 Mesej   : ${order.mesej}` : '',
+          '─────────────────────',
+          'Sila semak panel Admin untuk tindakan lanjut.',
+        ].filter(Boolean).join('\n');
+
+        window.open(`https://wa.me/601163593539?text=${encodeURIComponent(msg)}`, '_blank');
 
         btnText.classList.remove('d-none');
         btnLoading.classList.add('d-none');

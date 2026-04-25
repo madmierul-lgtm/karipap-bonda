@@ -18,7 +18,7 @@ const DB = (() => {
   let _pendingHandle = null; // needs user gesture to re-grant
   let _cache         = null; // in-memory mirror
 
-  const _empty = () => ({ purchase_orders: [], invoices: [] });
+  const _empty = () => ({ purchase_orders: [], invoices: [], orders: [] });
 
   // ── IndexedDB helpers ─────────────────────────────
   function _openIDB() {
@@ -318,22 +318,37 @@ const DB = (() => {
   function getAll() { return _load(); }
 
   // ── Orders (from index.html contact form) ────────
+  async function saveOrder(order) {
+    const db = _load();
+    if (!db.orders) db.orders = [];
+    order.id        = Date.now();
+    order.createdAt = new Date().toISOString();
+    order.status    = 'baru';
+    db.orders.unshift(order);
+    await _persist(db);
+    return order;
+  }
+
   function getOrders() {
-    return JSON.parse(localStorage.getItem('kb_orders') || '[]');
+    const db = _load();
+    return db.orders || [];
   }
 
   async function updateOrderStatus(id, status) {
-    const orders = getOrders();
-    const idx = orders.findIndex(o => o.id === id);
+    const db  = _load();
+    if (!db.orders) return;
+    const idx = db.orders.findIndex(o => o.id === id);
     if (idx !== -1) {
-      orders[idx].status = status;
-      localStorage.setItem('kb_orders', JSON.stringify(orders));
+      db.orders[idx].status = status;
+      await _persist(db);
     }
   }
 
   async function deleteOrder(id) {
-    const orders = getOrders().filter(o => o.id !== id);
-    localStorage.setItem('kb_orders', JSON.stringify(orders));
+    const db = _load();
+    if (!db.orders) return;
+    db.orders = db.orders.filter(o => o.id !== id);
+    await _persist(db);
   }
 
   function getHistory() {
@@ -351,6 +366,6 @@ const DB = (() => {
   return {
     init, autoConnect, reconnect, connect, isConnected,
     savePO, saveInvoice, remove, getAll, getHistory, countByType,
-    getOrders, updateOrderStatus, deleteOrder,
+    saveOrder, getOrders, updateOrderStatus, deleteOrder,
   };
 })();
