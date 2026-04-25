@@ -2,6 +2,8 @@
    KARIPAP BONDA — Main Script
    ================================================ */
 
+const WA_PHONE = '601163593539';
+
 document.addEventListener('DOMContentLoaded', async () => {
   // Connect to db.json automatically (uses stored handle from IndexedDB)
   if (typeof DB !== 'undefined') {
@@ -122,7 +124,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           await DB.saveOrder(order);
         }
 
-        // Send WhatsApp notification to admin
+        // Hantar notifikasi WhatsApp automatik ke admin
         const d = new Date();
         const tgl = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
         const msg = [
@@ -139,7 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           'Sila semak panel Admin untuk tindakan lanjut.',
         ].filter(Boolean).join('\n');
 
-        window.open(`https://wa.me/601163593539?text=${encodeURIComponent(msg)}`, '_blank');
+        window.open(`https://wa.me/${WA_PHONE}?text=${encodeURIComponent(msg)}`, '_blank');
 
         btnText.classList.remove('d-none');
         btnLoading.classList.add('d-none');
