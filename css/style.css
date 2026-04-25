@@ -812,12 +812,28 @@ h1, h2, h3, h4, h5 {
   .hero-stats { gap: 1.5rem !important; }
   .stat-item h3 { font-size: 1.4rem; }
 
-  /* Navbar */
+  /* Navbar — always solid on mobile so menu doesn't overlap hero */
+  #mainNav {
+    background: var(--dark-brown) !important;
+    padding: .75rem 0;
+    box-shadow: 0 4px 20px rgba(0,0,0,.3);
+  }
   .navbar-collapse {
     background: var(--dark-brown);
+    border-top: 1px solid rgba(255,255,255,.08);
+    padding: .75rem 0 .5rem;
     margin-top: .5rem;
-    border-radius: 12px;
-    padding: 1rem;
+  }
+  .navbar-collapse .nav-link {
+    padding: .55rem .75rem !important;
+    border-radius: 8px;
+  }
+  .navbar-collapse .nav-link:hover {
+    background: rgba(255,255,255,.06);
+  }
+  .navbar-collapse .btn-order {
+    margin-top: .5rem;
+    display: inline-block;
   }
 
   /* About */
