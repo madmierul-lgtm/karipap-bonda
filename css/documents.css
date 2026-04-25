@@ -94,6 +94,45 @@
 }
 .records-table tbody tr:last-child { border-bottom: none; }
 
+/* PDF & delete buttons inside records table */
+.btn-pdf {
+  display: inline-flex;
+  align-items: center;
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: .75rem;
+  font-weight: 600;
+  padding: .3rem .7rem;
+  cursor: pointer;
+  transition: background .2s, transform .15s;
+  white-space: nowrap;
+}
+.btn-pdf:hover {
+  background: #b02a37;
+  color: #fff;
+  transform: translateY(-1px);
+}
+.btn-rec-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: #adb5bd;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  font-size: .8rem;
+  padding: .3rem .55rem;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-rec-del:hover {
+  background: #dc3545;
+  border-color: #dc3545;
+  color: #fff;
+}
+
 /* ===== OVERRIDES FOR DOC PAGE ===== */
 .doc-body {
   background: #F0F2F5;
@@ -189,6 +228,12 @@
 .doc-form-wrap {
   max-width: 860px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.doc-form-section {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -421,6 +466,26 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
+}
+
+.preview-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .6rem;
+  padding: .85rem 1.2rem;
+  border-top: 1px solid rgba(255,255,255,.08);
+  background: #1A0A05;
+  flex-shrink: 0;
+}
+.preview-modal-footer .btn-outline-secondary {
+  border-color: rgba(255,255,255,.25);
+  color: rgba(255,255,255,.7);
+}
+.preview-modal-footer .btn-outline-secondary:hover {
+  background: rgba(255,255,255,.1);
+  color: #fff;
+  border-color: rgba(255,255,255,.4);
 }
 
 .preview-scaler {
@@ -838,7 +903,8 @@
 @media (max-width: 768px) {
   .doc-page-title { font-size: 1.4rem; }
   .form-card { padding: 1rem; }
-  .doc-form-wrap { gap: .75rem; }
+  .doc-form-wrap,
+  .doc-form-section { gap: 1rem; }
 
   /* items table — allow horizontal scroll */
   .items-table thead th,

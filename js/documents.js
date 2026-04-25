@@ -97,6 +97,7 @@ function bindEvents() {
   document.addEventListener('change', () => { calcTotals(state.activeTab); updatePreview(); });
 
   $('btnPrint').addEventListener('click', () => window.print());
+  $('btnPrint2').addEventListener('click', () => window.print());
   $('btnPreview').addEventListener('click', () => {
     updatePreview();
     new bootstrap.Modal($('previewModal')).show();
@@ -221,7 +222,7 @@ function renderPO() {
   $('pFromName').textContent = supplierName || 'Supplier Name';
   $('pFromReg').textContent  = $('poSupplierSST').value
     ? `SST Reg: ${$('poSupplierSST').value}` : '';
-  $('pAgentLine').textContent = 'via Karipap Bonda Enterprise (Authorized Agent)';
+  $('pAgentLine').textContent = 'via Karipap Bonda (Authorized Agent)';
 
   // Doc meta
   $('pDocType').textContent      = 'PURCHASE ORDER';
@@ -268,7 +269,7 @@ function renderPO() {
   $('pSigLabel1').textContent = `Authorised — ${supplierName || 'Supplier'}`;
   $('pSigLabel2').textContent = 'Received / Acknowledged';
   $('pFooterNote').textContent =
-    `This Purchase Order is prepared by Karipap Bonda Enterprise as Authorized Agent` +
+    `This Purchase Order is prepared by Karipap Bonda as Authorized Agent` +
     (supplierName ? ` on behalf of ${supplierName}` : '') +
     ` • hello@karipapbonda.my`;
 }
@@ -288,7 +289,7 @@ function renderInvoice() {
 
   // Header branding — Karipap Bonda is the issuer
   $('pDocLogo').textContent  = '🥟';
-  $('pFromName').textContent = 'Karipap Bonda Enterprise';
+  $('pFromName').textContent = 'Karipap Bonda';
   $('pFromReg').textContent  = '(002345678-K)';
   $('pAgentLine').textContent = '';
 
@@ -302,7 +303,7 @@ function renderInvoice() {
 
   // FROM box — Karipap Bonda
   $('pFromLabel').textContent   = 'FROM';
-  $('pFromNameBox').textContent = 'Karipap Bonda Enterprise';
+  $('pFromNameBox').textContent = 'Karipap Bonda';
   $('pFromAddr').textContent    = 'No. 12, Jalan Bonda Maju, Kampung Baru';
   $('pFromContact').textContent = '50300 Kuala Lumpur, Malaysia';
   $('pFromEmail').textContent   = '+60 12-345 6789 | hello@karipapbonda.my';
@@ -360,7 +361,7 @@ function renderInvoice() {
   $('pSigLabel1').textContent = 'Authorised — Karipap Bonda';
   $('pSigLabel2').textContent = 'Customer Signature';
   $('pFooterNote').textContent =
-    'Karipap Bonda Enterprise (002345678-K) • hello@karipapbonda.my • +60 12-345 6789';
+    'Karipap Bonda (002345678-K) • hello@karipapbonda.my • +60 12-345 6789';
 }
 
 function renderPreviewItems(rows, sym) {
@@ -440,6 +441,7 @@ async function saveDoc() {
       `Invoice <strong>${invoice.number}</strong> auto-generated.`
     );
     refreshRecords();
+    setTimeout(() => $('recordsSection').scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
   } else {
     const subtotal      = rows.reduce((s, r) => s + r.amount, 0);
     const taxRate       = parseFloat($('invTaxRate').value) || 0;
@@ -483,6 +485,7 @@ async function saveDoc() {
     $('invNumber').value = genDocNum('INV');
     showToast(`<i class="bi bi-check-circle-fill me-2"></i>${saved.number} saved!`);
     refreshRecords();
+    setTimeout(() => $('recordsSection').scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
   }
 }
 
@@ -639,12 +642,12 @@ function refreshRecords(query = '') {
                 <td class="small fw-bold text-end">${(doc.total || 0).toFixed(2)}</td>
                 <td><span class="history-status status-${escHtml(doc.status)}">${escHtml(doc.status)}</span></td>
                 <td class="text-center">
-                  <button class="btn btn-sm btn-outline-warning btn-rec-print"
-                    data-type="${doc._type}" data-id="${doc.id}" title="Print / PDF">
-                    <i class="bi bi-printer-fill"></i>
+                  <button class="btn btn-pdf btn-rec-print"
+                    data-type="${doc._type}" data-id="${doc.id}" title="Muat turun PDF">
+                    <i class="bi bi-file-earmark-pdf-fill me-1"></i>PDF
                   </button>
-                  <button class="btn btn-sm btn-outline-danger btn-rec-delete ms-1"
-                    data-type="${doc._type}" data-id="${doc.id}" title="Delete">
+                  <button class="btn btn-rec-del btn-rec-delete ms-1"
+                    data-type="${doc._type}" data-id="${doc.id}" title="Padam">
                     <i class="bi bi-trash"></i>
                   </button>
                 </td>
