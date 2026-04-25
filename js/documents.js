@@ -97,9 +97,9 @@ function bindEvents() {
   document.addEventListener('change', () => { calcTotals(state.activeTab); updatePreview(); });
 
   $('btnPrint').addEventListener('click', () => window.print());
-  $('btnPrint2').addEventListener('click', () => window.print());
   $('btnPreview').addEventListener('click', () => {
-    $('previewPanel').scrollIntoView({ behavior: 'smooth' });
+    updatePreview();
+    new bootstrap.Modal($('previewModal')).show();
   });
   $('btnSave').addEventListener('click', saveDoc);
   $('btnReset').addEventListener('click', resetForm);
@@ -673,7 +673,10 @@ function refreshRecords(query = '') {
 
 // ===== LOAD SAVED DOC INTO FORM & PRINT =====
 function loadAndPrint(doc) {
-  bootstrap.Modal.getInstance($('historyModal'))?.hide();
+  // Close any open modal first
+  ['historyModal', 'previewModal'].forEach(id => {
+    bootstrap.Modal.getInstance($(id))?.hide();
+  });
 
   const t = doc._type;
   switchTab(t);
@@ -744,8 +747,10 @@ function loadAndPrint(doc) {
   calcTotals(t);
   updatePreview();
 
-  // Wait for modal close animation before opening print dialog
-  setTimeout(() => window.print(), 400);
+  // Open preview modal then print
+  const modal = new bootstrap.Modal($('previewModal'));
+  modal.show();
+  $('previewModal').addEventListener('shown.bs.modal', () => window.print(), { once: true });
 }
 
 // ===== TOAST =====

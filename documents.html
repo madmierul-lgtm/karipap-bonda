@@ -79,13 +79,8 @@
       </li>
     </ul>
 
-    <!-- ===== SPLIT VIEW: FORM | PREVIEW ===== -->
-    <div class="doc-split-view">
-
-      <!-- ============================
-           LEFT — FORM PANEL
-           ============================ -->
-      <div class="doc-form-panel">
+    <!-- ===== FORM (full-width) ===== -->
+    <div class="doc-form-wrap">
 
         <!-- ========== PURCHASE ORDER FORM ========== -->
         <div id="poForm" class="doc-form-section">
@@ -95,7 +90,7 @@
             <div class="form-card-title">
               <i class="bi bi-info-circle-fill text-gold"></i> Document Details
             </div>
-            <div class="row g-3">
+            <div class="row g-4">
               <div class="col-sm-6">
                 <label class="form-label">PO Number</label>
                 <div class="input-group">
@@ -129,7 +124,7 @@
               <i class="bi bi-building-fill text-gold"></i> Supplier — Principal
               <span class="form-card-sub">Karipap Bonda acts on behalf of this supplier</span>
             </div>
-            <div class="row g-3">
+            <div class="row g-4">
               <div class="col-12">
                 <label class="form-label">Supplier / Company Name <span class="required-star">*</span></label>
                 <input type="text" class="form-control" id="poSupplierName"
@@ -165,7 +160,7 @@
               <i class="bi bi-person-lines-fill text-gold"></i> Buyer / Deliver To
               <span class="form-card-sub">The party receiving this Purchase Order</span>
             </div>
-            <div class="row g-3">
+            <div class="row g-4">
               <div class="col-sm-6">
                 <label class="form-label">Buyer Name <span class="required-star">*</span></label>
                 <input type="text" class="form-control" id="poBuyerName" placeholder="Ahmad Abdullah" />
@@ -243,7 +238,7 @@
             <div class="form-card-title">
               <i class="bi bi-chat-left-text text-gold"></i> Notes &amp; Terms
             </div>
-            <div class="row g-3">
+            <div class="row g-4">
               <div class="col-12">
                 <label class="form-label">Delivery / Special Instructions</label>
                 <textarea class="form-control" id="poDeliveryNotes" rows="2"
@@ -267,7 +262,7 @@
             <div class="form-card-title">
               <i class="bi bi-info-circle-fill text-gold"></i> Document Details
             </div>
-            <div class="row g-3">
+            <div class="row g-4">
               <div class="col-sm-6">
                 <label class="form-label">Invoice Number</label>
                 <div class="input-group">
@@ -319,7 +314,7 @@
             <div class="form-card-title">
               <i class="bi bi-person-fill text-gold"></i> Bill To (Customer)
             </div>
-            <div class="row g-3">
+            <div class="row g-4">
               <div class="col-sm-6">
                 <label class="form-label">Customer Name</label>
                 <input type="text" class="form-control" id="invCustomerName" placeholder="Ahmad Abdullah" />
@@ -413,7 +408,7 @@
             <div class="form-card-title">
               <i class="bi bi-bank text-gold"></i> Payment Details
             </div>
-            <div class="row g-3">
+            <div class="row g-4">
               <div class="col-sm-6">
                 <label class="form-label">Bank Name</label>
                 <input type="text" class="form-control" id="invBankName" value="Maybank" />
@@ -446,36 +441,44 @@
             <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
           </button>
           <button class="btn btn-outline-gold" id="btnSave">
-            <i class="bi bi-floppy me-1"></i> Save Draft
+            <i class="bi bi-floppy me-1"></i> Save
           </button>
           <button class="btn btn-gold" id="btnPreview">
-            <i class="bi bi-eye me-1"></i> Preview
-          </button>
-          <button class="btn btn-dark" id="btnPrint">
-            <i class="bi bi-printer me-1"></i> Print / PDF
+            <i class="bi bi-eye me-1"></i> Preview &amp; Print
           </button>
         </div>
 
-      </div><!-- /form panel -->
+    </div><!-- /form wrap -->
 
-      <!-- ============================
-           RIGHT — LIVE PREVIEW PANEL
-           ============================ -->
-      <div class="doc-preview-panel" id="previewPanel">
-        <div class="preview-toolbar">
-          <span class="preview-label"><i class="bi bi-eye me-1"></i> Live Preview</span>
-          <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-secondary" id="btnZoomOut" title="Zoom out"><i class="bi bi-zoom-out"></i></button>
-            <button class="btn btn-sm btn-outline-secondary" id="btnZoomIn" title="Zoom in"><i class="bi bi-zoom-in"></i></button>
-            <button class="btn btn-sm btn-gold" id="btnPrint2">
-              <i class="bi bi-printer me-1"></i> Print
+    </div><!-- /container -->
+
+  <!-- ===== PREVIEW MODAL ===== -->
+  <div class="modal fade" id="previewModal" tabindex="-1" aria-label="Document Preview">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable modal-fullscreen-md-down">
+      <div class="modal-content preview-modal-content">
+
+        <div class="preview-modal-header">
+          <span class="preview-modal-title">
+            <i class="bi bi-eye me-2"></i>Document Preview
+          </span>
+          <div class="d-flex align-items-center gap-2 ms-auto">
+            <button class="btn btn-sm btn-outline-secondary" id="btnZoomOut" title="Zoom out">
+              <i class="bi bi-zoom-out"></i>
             </button>
+            <button class="btn btn-sm btn-outline-secondary" id="btnZoomIn" title="Zoom in">
+              <i class="bi bi-zoom-in"></i>
+            </button>
+            <button class="btn btn-sm btn-gold" id="btnPrint">
+              <i class="bi bi-printer-fill me-1"></i> Print / PDF
+            </button>
+            <button type="button" class="btn-close ms-1" data-bs-dismiss="modal"></button>
           </div>
         </div>
 
-        <div class="preview-scaler" id="previewScaler">
-          <!-- ===== PRINTABLE DOCUMENT ===== -->
-          <div class="printable-doc" id="printableDoc">
+        <div class="preview-modal-body">
+          <div class="preview-scaler" id="previewScaler">
+            <!-- ===== PRINTABLE DOCUMENT ===== -->
+            <div class="printable-doc" id="printableDoc">
 
             <!-- Doc Header -->
             <div class="pdoc-header">
@@ -581,11 +584,15 @@
               Prepared by Karipap Bonda Enterprise (Authorized Agent) • hello@karipapbonda.my
             </div>
 
-          </div><!-- /printable-doc -->
-        </div>
-      </div><!-- /preview panel -->
+            </div><!-- /printable-doc -->
+          </div><!-- /preview-scaler -->
+        </div><!-- /preview-modal-body -->
 
-    </div><!-- /split view -->
+      </div><!-- /modal-content -->
+    </div><!-- /modal-dialog -->
+  </div><!-- /previewModal -->
+
+  <div class="container-fluid px-4 pb-5">
 
     <!-- ===== RECORDS LISTING ===== -->
     <div class="records-panel mt-4" id="recordsSection">
@@ -606,7 +613,7 @@
       </div>
     </div>
 
-  </div><!-- /container -->
+  </div><!-- /records container -->
 
   <!-- ===== SAVE SUCCESS TOAST ===== -->
   <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999">
