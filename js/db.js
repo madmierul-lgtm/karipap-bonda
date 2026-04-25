@@ -317,6 +317,25 @@ const DB = (() => {
 
   function getAll() { return _load(); }
 
+  // ── Orders (from index.html contact form) ────────
+  function getOrders() {
+    return JSON.parse(localStorage.getItem('kb_orders') || '[]');
+  }
+
+  async function updateOrderStatus(id, status) {
+    const orders = getOrders();
+    const idx = orders.findIndex(o => o.id === id);
+    if (idx !== -1) {
+      orders[idx].status = status;
+      localStorage.setItem('kb_orders', JSON.stringify(orders));
+    }
+  }
+
+  async function deleteOrder(id) {
+    const orders = getOrders().filter(o => o.id !== id);
+    localStorage.setItem('kb_orders', JSON.stringify(orders));
+  }
+
   function getHistory() {
     const db   = _load();
     const pos  = db.purchase_orders.map(d => ({ ...d, _type: 'po'  }));
@@ -332,5 +351,6 @@ const DB = (() => {
   return {
     init, autoConnect, reconnect, connect, isConnected,
     savePO, saveInvoice, remove, getAll, getHistory, countByType,
+    getOrders, updateOrderStatus, deleteOrder,
   };
 })();

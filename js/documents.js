@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   refreshRecords();
+  refreshOrders();
 });
 
 function initDates() {
@@ -121,6 +122,7 @@ function bindEvents() {
   });
 
   $('recordsSearch').addEventListener('input', e => refreshRecords(e.target.value));
+  $('btnRefreshOrders').addEventListener('click', refreshOrders);
 }
 
 // ===== TAB SWITCH =====
@@ -670,6 +672,88 @@ function refreshRecords(query = '') {
     btn.addEventListener('click', async () => {
       await DB.remove(btn.dataset.type, parseInt(btn.dataset.id));
       refreshRecords($('recordsSearch').value);
+    });
+  });
+}
+
+// ===== PESANAN MASUK =====
+function refreshOrders() {
+  const wrap   = $('ordersTableWrap');
+  const badge  = $('ordersNewBadge');
+  const orders = DB.getOrders();
+
+  // Update new-order badge count
+  const newCount = orders.filter(o => o.status === 'baru').length;
+  if (newCount > 0) {
+    badge.textContent = newCount;
+    badge.classList.remove('d-none');
+  } else {
+    badge.classList.add('d-none');
+  }
+
+  if (!orders.length) {
+    wrap.innerHTML = '<p class="text-muted text-center py-3 small">Tiada pesanan masuk.</p>';
+    return;
+  }
+
+  const statusLabel = { baru: 'Baru', diproses: 'Diproses', siap: 'Siap', selesai: 'Selesai', batal: 'Batal' };
+
+  wrap.innerHTML = `
+    <div class="records-table-scroll">
+      <table class="records-table">
+        <thead>
+          <tr>
+            <th>Tarikh</th>
+            <th>Nama</th>
+            <th>Telefon</th>
+            <th>Perisa</th>
+            <th>Kuantiti</th>
+            <th>Mesej</th>
+            <th>Status</th>
+            <th class="text-center">Tindakan</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${orders.map(o => {
+            const d = new Date(o.createdAt);
+            const tgl = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+            return `
+              <tr class="${o.status === 'baru' ? 'order-row-new' : ''}">
+                <td class="small text-muted" style="white-space:nowrap">${tgl}</td>
+                <td class="fw-semibold small">${escHtml(o.nama || '—')}</td>
+                <td class="small">${escHtml(o.telefon || '—')}</td>
+                <td class="small">${escHtml(o.perisa || '—')}</td>
+                <td class="small">${escHtml(o.kuantiti || '—')}</td>
+                <td class="small text-muted" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(o.mesej)}">${escHtml(o.mesej || '—')}</td>
+                <td>
+                  <select class="form-select form-select-sm order-status-select" data-id="${o.id}" style="min-width:100px;font-size:.75rem">
+                    ${Object.entries(statusLabel).map(([val, lbl]) =>
+                      `<option value="${val}"${o.status === val ? ' selected' : ''}>${lbl}</option>`
+                    ).join('')}
+                  </select>
+                </td>
+                <td class="text-center">
+                  <button class="btn-rec-del btn-order-del" data-id="${o.id}" title="Padam">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  wrap.querySelectorAll('.order-status-select').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      await DB.updateOrderStatus(parseInt(sel.dataset.id), sel.value);
+      refreshOrders();
+    });
+  });
+
+  wrap.querySelectorAll('.btn-order-del').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await DB.deleteOrder(parseInt(btn.dataset.id));
+      refreshOrders();
     });
   });
 }

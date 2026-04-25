@@ -91,23 +91,39 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', e => {
       e.preventDefault();
 
-      const btnText = submitBtn.querySelector('.btn-text');
+      const btnText    = submitBtn.querySelector('.btn-text');
       const btnLoading = submitBtn.querySelector('.btn-loading');
 
-      // Show loading state
       btnText.classList.add('d-none');
       btnLoading.classList.remove('d-none');
       submitBtn.disabled = true;
 
-      // Simulate async submit
       setTimeout(() => {
+        // Collect form data
+        const order = {
+          id:        Date.now(),
+          nama:      document.getElementById('orderName')?.value.trim()    || '',
+          telefon:   document.getElementById('orderPhone')?.value.trim()   || '',
+          email:     document.getElementById('orderEmail')?.value.trim()   || '',
+          perisa:    document.getElementById('orderPerisa')?.value         || '',
+          kuantiti:  document.getElementById('orderKuantiti')?.value       || '',
+          mesej:     document.getElementById('orderMesej')?.value.trim()   || '',
+          status:    'baru',
+          createdAt: new Date().toISOString(),
+        };
+
+        // Save to localStorage so admin can see it in documents.html
+        const orders = JSON.parse(localStorage.getItem('kb_orders') || '[]');
+        orders.unshift(order);
+        localStorage.setItem('kb_orders', JSON.stringify(orders));
+
         btnText.classList.remove('d-none');
         btnLoading.classList.add('d-none');
         submitBtn.disabled = false;
         successMsg.classList.remove('d-none');
         form.reset();
         successMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }, 1800);
+      }, 1000);
     });
   }
 

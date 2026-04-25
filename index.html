@@ -522,19 +522,19 @@
               <div class="row g-3">
                 <div class="col-sm-6">
                   <label class="form-label">Nama Penuh</label>
-                  <input type="text" class="form-control" placeholder="Ahmad Abdullah" required />
+                  <input type="text" id="orderName" class="form-control" placeholder="Ahmad Abdullah" required />
                 </div>
                 <div class="col-sm-6">
                   <label class="form-label">Telefon / WhatsApp</label>
-                  <input type="tel" class="form-control" placeholder="+60 12-345 6789" required />
+                  <input type="tel" id="orderPhone" class="form-control" placeholder="+60 12-345 6789" required />
                 </div>
                 <div class="col-12">
                   <label class="form-label">Alamat E-mel</label>
-                  <input type="email" class="form-control" placeholder="anda@email.com" />
+                  <input type="email" id="orderEmail" class="form-control" placeholder="anda@email.com" />
                 </div>
                 <div class="col-sm-6">
                   <label class="form-label">Perisa</label>
-                  <select class="form-select">
+                  <select id="orderPerisa" class="form-select">
                     <option value="">Pilih perisa...</option>
                     <option>Karipap Ayam</option>
                     <option>Karipap Daging</option>
@@ -546,7 +546,7 @@
                 </div>
                 <div class="col-sm-6">
                   <label class="form-label">Kuantiti</label>
-                  <select class="form-select">
+                  <select id="orderKuantiti" class="form-select">
                     <option>10 biji</option>
                     <option>20 biji</option>
                     <option>50 biji</option>
@@ -556,7 +556,7 @@
                 </div>
                 <div class="col-12">
                   <label class="form-label">Mesej / Alamat Penghantaran</label>
-                  <textarea class="form-control" rows="4" placeholder="Beritahu kami alamat penghantaran atau sebarang permintaan khas..."></textarea>
+                  <textarea id="orderMesej" class="form-control" rows="4" placeholder="Beritahu kami alamat penghantaran atau sebarang permintaan khas..."></textarea>
                 </div>
                 <div class="col-12">
                   <button type="submit" class="btn btn-gold btn-lg w-100" id="submitBtn">

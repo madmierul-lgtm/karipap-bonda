@@ -94,6 +94,22 @@
 }
 .records-table tbody tr:last-child { border-bottom: none; }
 
+/* ===== PESANAN MASUK PANEL ===== */
+.orders-panel {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e0e0e0;
+  padding: 1.5rem;
+}
+
+/* Highlight new/unread orders */
+.order-row-new {
+  background: rgba(212,175,55,.06);
+}
+.order-row-new td:first-child {
+  border-left: 3px solid #D4AF37;
+}
+
 /* PDF & delete buttons inside records table */
 .btn-pdf {
   display: inline-flex;
